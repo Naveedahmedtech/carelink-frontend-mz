@@ -39,13 +39,6 @@ export interface IInputFieldPropsBase {
 // Use type intersection to combine IInputFieldPropsBase with FieldHookConfig<string>
 export type IInputFieldProps = IInputFieldPropsBase & FieldHookConfig<string>;
 
-export interface IRegisterValues {
-  username: string;
-  email: string;
-  password: string;
-  confirm_password: string;
-}
-
 export interface ITitleText {
   text: string;
 }

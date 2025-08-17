@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useEffect, useState } from 'react';
-import PageLoader from '../../components/PageLoader';
 import { useLogoutMutation } from '../../redux/features/authApi';
 import { apiFetch } from '../../server/api';
 import { APP_ROUTES } from '../../constant/APP_ROUTES';
@@ -42,11 +41,10 @@ const PublicRouteWrapper = () => {
     }, []);
     
     if (isLoading) {
-        return <PageLoader />;
+        return <div>    Loading</div>;
     }
 
-    // if (!userData?.isLoggedIn) {
-    if (userData?.isLoggedIn) {
+    if (!userData?.isLoggedIn) {
         return <Outlet />;
     } else {
         return <Navigate to={APP_ROUTES.APP.HOME}/>;

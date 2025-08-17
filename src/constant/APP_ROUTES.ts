@@ -30,6 +30,7 @@ export const APP_ROUTES = {
     },
   },
   AUTH: {
+    REGISTER: '/auth/register',
     SIGN_IN: '/auth/sign-in',
     FORGOT_PASSWORD: '/auth/forgot-password',
     REGISTER_PARTICIPANT: '/auth/register-participant',

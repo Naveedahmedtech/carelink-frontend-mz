@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import PageLoader from '../../components/PageLoader';
+// import PageLoader from '../../components/PageLoader';
 import { useLogoutMutation } from '../../redux/features/authApi';
 import { apiFetch } from '../../server/api';
 import { APP_ROUTES } from '../../constant/APP_ROUTES';
@@ -44,11 +44,10 @@ const PrivateRouteWrapper = () => {
     }, []);
     
     if (isLoading) {
-        return <PageLoader />;
+        return <div>    Loading</div>;
     }
 
-    if (userData?.isLoggedIn) {
-    // if (!userData?.isLoggedIn) {
+    if (!userData?.isLoggedIn) {
         return <Navigate to={APP_ROUTES.AUTH.SIGN_IN} />;
     }
     return <Outlet />;

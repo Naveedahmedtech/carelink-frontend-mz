@@ -1,16 +1,20 @@
-import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import authReducer from "./features/authSlice";
-import { authApi } from "./features/authApi";
-import { useDispatch } from "react-redux";
-import { projectApi } from "./features/projectsApi";
-import { issueApi } from "./features/issueApi";
-import { orderApi } from "./features/orderApi";
-import { companyApi } from "./features/companyApi";
-import { commentApi } from "./features/commentApi";
-import { checklistApi } from "./features/checklistApi";
+// store.ts
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import authReducer from './features/authSlice';
+import registrationReducer from './features/auth/registrationSlice'; 
+
+import { authApi } from './features/authApi';
+import { projectApi } from './features/projectsApi';
+import { issueApi } from './features/issueApi';
+import { orderApi } from './features/orderApi';
+import { companyApi } from './features/companyApi';
+import { commentApi } from './features/commentApi';
+import { checklistApi } from './features/checklistApi';
+import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; 
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  registration: registrationReducer,            
   [authApi.reducerPath]: authApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
   [issueApi.reducerPath]: issueApi.reducer,
@@ -33,9 +37,9 @@ export const store = configureStore({
       .concat(checklistApi.middleware),
 });
 
-// Define RootState and AppDispatch types once
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-// Custom useAppDispatch hook to use throughout your app
+// Typed hooks
 export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector; // <-- ADD (handy)

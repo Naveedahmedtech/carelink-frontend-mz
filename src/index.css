@@ -1,0 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Niconne&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+    /*--color-primary: #7a22fe;31BD59*/
+    --color-primary: #32a5e2;
+    /* --color-primary: #FFC107; */
+    --color-text-hover: #ffffff;
+    --color-hover: #194157;
+    --color-text-secondary: #0202029d;
+    /* Primary brand color */
+    --color-background: #ededed8c;
+    /* Background for light theme */
+    /*--color-background-shade-1: #f8f9fa;*/
+    /* --color-background-shade-1: #F0F7F9; */
+    --color-background-shade-1: #0D2938;
+
+    /* Slightly darker for card backgrounds or sections */
+    /*#F0F7F9*/
+    /* --color-background-shade-2: #ddecf0; */
+    --color-background-shade-2: #ffffff;
+    /* Lighter shadow or divider */
+    --color-text: #ffff;
+    --color-text-dark: #0D2938;
+    /* Main text color, dark gray for readability */
+    --color-text-muted: #6c757d;
+    /* Muted text for secondary information */
+    --color-border: #0D2938;
+    /* Light gray for borders */
+    --color-shadow: rgba(0, 0, 0, 0.1);
+    /* Light shadow for depth */
+    --color-animated-post-skeleton: rgba(255, 255, 255, 0.543);
+
+    /* Status Colors */
+    --color-pending: #ffcc00; /* Yellow */
+    --color-success: #28a745; /* Green */
+    --color-todo: #007bff; /* Blue */
+    --color-error: #ff0000;
+}
+
+.dark {
+    /*--color-primary: #FFC107;*/
+    --color-primary: #d9f1f3;
+
+    --color-text-hover: #ffffff;
+    --color-text-secondary: #ffffff6c;
+    --color-hover: #052c65;
+    /* Primary brand color (same as light theme, but it will glow more) */
+    --color-background: #121212;
+    /* Deep dark background for the entire layout */
+    /* --color-background-shade-1: #1c1c1c; */
+    /* Slightly lighter for card backgrounds */
+    --color-background-shade-2: #252525;
+    /* For dividers, sections, or shadows */
+    --color-text: #e9ecef;
+    /* Main text color, very light for contrast */
+    --color-text-muted: #adb5bd;
+    /* Muted text for secondary information */
+    --color-border: #858585;
+    /* Border color, darker for subtle lines */
+    --color-shadow: rgba(0, 0, 0, 0.4);
+    /* Darker shadow for depth */
+    --color-animated-post-skeleton: rgba(255, 255, 255, 0.158);
+    /* Status Colors */
+    --color-pending: #ffc107; /* Darker yellow for pending */
+    --color-success: #218838; /* Darker green for success */
+    --color-todo: #0056b3; /* Darker blue for todo */
+    --color-error: #ff0000;
+}
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+    color: var(--color-text);
+    font-family: "Inter", serif;
+}
+
+
+/* Add this to your main CSS or a global style file */
+
+.dot-loader {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot-loader div {
+  width: 10px;
+  height: 10px;
+  background-color: #3b82f6; /* Tailwind blue-500 */
+  border-radius: 50%;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+.dot-loader div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot-loader div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+
+
+.loader {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.premium-loader {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.custom-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #3b82f6; /* Tailwind blue-500 */
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+
+
+::-moz-selection {
+    color: #FFFF;
+    background: var(--color-primary);
+}
+
+::selection {
+    color: #FFFF;
+    background: var(--color-primary);
+}
+
+
+
+
+::-webkit-scrollbar {
+    width: 5px; 
+    height: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: transparent; /* Keep the track subtle */
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary); /* Use a semi-transparent version of your primary color */
+    border-radius: 10px; /* Slightly rounder for subtlety */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary); /* Slightly darker on hover */
+}
+
+
+.custom-scrollbar {
+    scrollbar-width: none;
+    /* For Firefox */
+    -ms-overflow-style: none;
+    /* For Internet Explorer and Edge */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+
+
+
+
+.title-font {
+    font-family: "Niconne", cursive;
+}
+
+/* inputs */
+input,
+textarea {
+    transition: border-color 0.3s ease;
+    border: 2px solid #ddd;
+    /* Light gray border */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    /* Highlight color on focus */
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+
+
+.swiper-wrapper {
+    display: flex !important;
+    justify-content: center !important;
+}
+
+
+@keyframes background-pan {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+
+  .bg-skeleton {
+      background: var(--color-background-shade-2);
+      position: relative;
+      overflow: hidden;
+  }
+
+  .shimmer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 150%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(224, 224, 224, 0) 0%, var(--color-animated-post-skeleton) 50%, rgba(224, 224, 224, 0) 100%);
+      animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+      0% {
+          transform: translateX(-150%);
+      }
+
+      100% {
+          transform: translateX(150%);
+      }
+  }

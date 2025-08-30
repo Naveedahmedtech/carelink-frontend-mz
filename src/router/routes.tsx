@@ -1,31 +1,80 @@
-import {createBrowserRouter, createRoutesFromElements, Route} from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom';
 import PrivateRouteWrapper from './components/PrivateRouteWrapper';
 import PublicRouteWrapper from './components/PublicRouteWrapper';
-import {ParticipantRegistration, Registration, TrainerRegistration} from '../pages/auth';
+import { ParticipantRegistration, Registration, TrainerRegistration } from '../pages/auth';
 import { NotFound } from '../pages';
-import {APP_ROUTES} from '../constant/APP_ROUTES';
+import { APP_ROUTES } from '../constant/APP_ROUTES';
 import ErrorBoundary from "../ErrorBoundry.tsx";
 import Step2ParticipantAccount from '../pages/auth/registration/Step2ParticipantAccount.tsx';
 import Step2ServiceAgreement from '../pages/auth/registration/Step2ServiceAgreement.tsx';
 import SignIn from '../pages/auth/SignIn.tsx';
-
+import Step3CreateLogin from '../pages/auth/registration/Step3CreateLogin.tsx';
+import RoleBasedDashboard from '../layouts/RoleBasedDashboard.tsx';
+import UpcomingShifts from '../pages/dashboard/participant/upcoming/index.tsx';
+import RequestShiftPage from '../components/shifts/RequestShiftPage.tsx';
+import PreviousShiftsPage from '../components/shifts/PreviousShiftsPage.tsx';
+import OwnerInterviewBookingPage from '../pages/auth/registration/components/BookInterview.tsx';
+import ThankYouPage from '../pages/ThankYouPage.tsx';
+import TrainerOnboardingWizard from '../pages/auth/registration/trainers/onboarding/TrainerOnboardingWizard.tsx';
+import ParticipantNotesPage from '../pages/dashboard/participant/support-notes/index.tsx';
+import TrainerDashboardPage from '../pages/dashboard/trainer/dashboard/index.tsx';
+import TrainerSchedulePage from '../pages/dashboard/trainer/my-schedule/index.tsx';
+import TrainerBookingPage from '../pages/dashboard/trainer/booking/index.tsx';
+import TrainerTimesheetPage from '../pages/dashboard/trainer/time-sheet/index.tsx';
+import TrainerReportsPage from '../pages/dashboard/trainer/shift-reports/index.tsx';
 
 export const router = createBrowserRouter(
-    createRoutesFromElements(
-        <>
-            <Route element={<PrivateRouteWrapper />} errorElement={<ErrorBoundary />}>
-                <Route path='' element={<SignIn />} errorElement={<ErrorBoundary />} />
+  createRoutesFromElements(
+    <>
+     <Route index element={<Navigate to={'/dashboard'} replace />} />
+      {/* 🔓 Public routes (no auth required, redirected if already logged in) */}
+      <Route element={<PublicRouteWrapper />} errorElement={<ErrorBoundary />}>
+        <Route path={APP_ROUTES.AUTH.SIGN_IN} element={<SignIn />} />
+        <Route path={APP_ROUTES.AUTH.REGISTER} element={<Registration />} />
+        <Route path={APP_ROUTES.AUTH.REGISTER_PARTICIPANT} element={<ParticipantRegistration />} />
+        <Route path={'/auth/register/participant'} element={<Step2ParticipantAccount />} />
+        <Route path={'/auth/register/participant/agreement'} element={<Step2ServiceAgreement />} />
+        <Route path={'/auth/register/participant/create-login'} element={<Step3CreateLogin />} />
+        <Route path={APP_ROUTES.AUTH.REGISTER_TRAINER} element={<TrainerRegistration />} />
+          <Route path="/auth/participant/book-interview" element={<OwnerInterviewBookingPage />} />
 
-            </Route>
-            <Route element={<PublicRouteWrapper />} errorElement={<ErrorBoundary />}>
-                <Route path={APP_ROUTES.AUTH.SIGN_IN} element={<SignIn />} errorElement={<ErrorBoundary />} />
-                <Route path={APP_ROUTES.AUTH.REGISTER} element={<Registration />} errorElement={<ErrorBoundary />} />
-                <Route path={APP_ROUTES.AUTH.REGISTER_PARTICIPANT} element={<ParticipantRegistration />} errorElement={<ErrorBoundary />} />
-                <Route path={'/auth/register/participant'} element={<Step2ParticipantAccount />} errorElement={<ErrorBoundary />} />
-                <Route path={'/auth/register/participant/agreement'} element={<Step2ServiceAgreement />} errorElement={<ErrorBoundary />} />
-                <Route path={APP_ROUTES.AUTH.REGISTER_TRAINER} element={<TrainerRegistration />} errorElement={<ErrorBoundary />} />
-            </Route>
-            <Route path={APP_ROUTES.NOT_FOUND} element={<NotFound />} errorElement={<ErrorBoundary />} />
-        </>
-    )
+
+          <Route path="/auth/register/trainer" element={<TrainerOnboardingWizard />} />
+          
+          
+          <Route path="/thank-you" element={<ThankYouPage />} />
+
+
+      </Route>
+
+      {/* 🔒 Private routes (must be logged in) */}
+      <Route element={<PrivateRouteWrapper />} errorElement={<ErrorBoundary />}>
+        <Route path="/dashboard" element={<RoleBasedDashboard />}>
+          {/* participant pages */}
+          <Route path="upcoming" element={<UpcomingShifts />} />
+          <Route path="request" element={<RequestShiftPage />} />
+          <Route path="previous" element={<PreviousShiftsPage />} />
+          <Route path="notes" element={<ParticipantNotesPage />} />
+
+          {/* admin pages */}
+          <Route path="participants" element={<div>Participants</div>} />
+          <Route path="trainers" element={<div>Trainers</div>} />
+          <Route path="calendar" element={<div>Calendar</div>} />
+
+          {/* trainer pages */}
+          <Route path="trainer" element={<TrainerDashboardPage />} />
+          <Route path="schedule" element={<TrainerSchedulePage />} />
+          <Route path="previous-shifts" element={<TrainerBookingPage />} />
+          <Route path="reports" element={<TrainerReportsPage />} />
+          <Route path="time-sheets" element={<TrainerTimesheetPage />} />
+
+
+
+        </Route>
+      </Route>
+
+      {/* 404 fallback */}
+      <Route path={APP_ROUTES.NOT_FOUND} element={<NotFound />} />
+    </>
+  )
 );

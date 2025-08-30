@@ -67,7 +67,7 @@ export default function Step2ServiceAgreement() {
             step={2}
             totalSteps={3}
             title="Service Agreement"
-            subtitle="Read the agreement, acknowledge the policies, and sign to continue."
+            // subtitle="Read the agreement, acknowledge the policies, and sign to continue."
             progress={progress}
             role={role || 'participant'}
             // roles={['participant', 'trainer', 'admin']}

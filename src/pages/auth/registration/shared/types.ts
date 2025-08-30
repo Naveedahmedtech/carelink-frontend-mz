@@ -13,10 +13,13 @@ export type RegistrationValues = {
   guardianEmail: string;
 
   interests: string[];
-  availability: Record<string, string>;
+  availability: any;
 
   planManagerName: string;
   planManagerEmail: string;
+
+  password?: string;
+  confirmPassword?: string;
 };
 
 export type RegistrationErrors = Partial<Record<keyof RegistrationValues, string>>;

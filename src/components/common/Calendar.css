@@ -1,0 +1,28 @@
+.fc .fc-toolbar-title {
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--color-text);
+}
+
+.fc .fc-button {
+  background: var(--color-background-shade-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 4px 10px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.fc .fc-button:hover {
+  background: var(--color-hover);
+  color: #fff;
+}
+.fc .fc-button-primary:disabled {
+  background: var(--color-background-shade-2);
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  background: var(--color-primary);
+  color: #fff;
+}

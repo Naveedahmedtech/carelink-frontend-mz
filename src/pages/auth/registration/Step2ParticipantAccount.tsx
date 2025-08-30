@@ -109,7 +109,7 @@ export default function Step1ParticipantRegistration() {
             step={1}
             totalSteps={3}
             title="Participant Registration"
-            subtitle="Provide your personal details, preferences, and funding info."
+            // subtitle="Provide your personal details, preferences, and funding info."
             progress={progress}
             role={role}
           />

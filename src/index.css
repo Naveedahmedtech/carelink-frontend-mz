@@ -8,39 +8,40 @@
 
 :root {
   /* Calendly primary brand */
-  --color-primary: #0069ff;
+  --color-primary: #E31E68; /* main accent */
 
-  /* Hover and interaction */
-  --color-hover: #004ecb;
-  --color-text-hover: #ffffff;
+  /* Hover and interaction (derived from primary) */
+  --color-hover: #c71856;         /* darker shade of primary */
+  --color-text-hover: #ffffff;    /* keep white for contrast */
 
   /* Text */
   --color-text: #1f1f1f;          /* Deep neutral for readability */
   --color-text-dark: #0d0d0d;
-  --color-text-secondary: #6b7280; /* Gray-500ish */
-  --color-text-muted: #9ca3af;     /* Gray-400ish */
+  --color-text-secondary: #6b7280; /* gray-500ish */
+  --color-text-muted: #9ca3af;     /* gray-400ish */
 
   /* Backgrounds */
-  --color-background: #f9fafb;        /* light gray background */
-  --color-background-shade-1: #ffffff;/* card backgrounds */
-  --color-background-shade-2: #f3f4f6;/* slightly darker panels */
+  --color-background: #f9fafb;         /* light gray background */
+  --color-background-shade-1: #ffffff; /* cards */
+  --color-background-shade-2: #fdf2f7; /* light tint of primary for subtle panels */
 
   /* Border & shadows */
-  --color-border: #e5e7eb;   /* light gray border */
-  --color-shadow: rgba(0, 0, 0, 0.05);
+  --color-border: #f3d6e1;       /* very light tint of primary */
+  --color-shadow: rgba(227, 30, 104, 0.1); /* soft brand-tinted shadow */
 
   /* Skeleton loaders */
-  --color-animated-post-skeleton: rgba(0, 0, 0, 0.05);
+  --color-animated-post-skeleton: rgba(227, 30, 104, 0.08);
 
-  /* Status Colors */
-  --color-pending: #facc15;  /* Calendly uses vibrant yellow accents */
-  --color-success: #22c55e;  /* green-500 */
-  --color-todo: #3b82f6;     /* blue-500 */
-  --color-error: #ef4444;    /* red-500 */
+  /* Status Colors (harmonized with primary) */
+  --color-pending: #facc15;  /* yellow still works as alert */
+  --color-success: #22c55e;  /* green for success */
+  --color-todo: #E31E68;     /* replaced blue with brand color */
+  --color-error: #ef4444;    /* red keeps clarity for errors */
 }
 
+
 .dark {
-  --color-primary: #60a5fa; /* lighter blue for dark mode glow */
+  --color-primary: #E31E68; /* lighter blue for dark mode glow */
 
   --color-hover: #2563eb;
   --color-text-hover: #ffffff;

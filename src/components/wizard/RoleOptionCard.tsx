@@ -1,10 +1,7 @@
-import * as React from 'react';
-import {
-  Card, CardActionArea, CardContent, Stack, Typography, Box, useTheme, alpha, Tooltip
-} from '@mui/material';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import { visuallyHidden } from '@mui/utils';
-import type { SxProps, Theme } from '@mui/material/styles';
+import * as React from "react";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import { Tooltip } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 
 type Props = {
   checked: boolean;
@@ -13,44 +10,53 @@ type Props = {
   description: string;
   onSelect: () => void;
   disabled?: boolean;
-  dense?: boolean;                // compact paddings
-  name?: string;                  // radio group name (for a11y)
-  id?: string;                    // radio id
-  sx?: SxProps<Theme>;            // theme overrides
-  'data-testid'?: string;
+  dense?: boolean;
+  name?: string;
+  id?: string;
+  "data-testid"?: string;
 };
 
 const RoleOptionCard = React.memo(
   React.forwardRef<HTMLDivElement, Props>(function RoleOptionCard(
-    { checked, icon: Icon, label, description, onSelect, disabled, dense, name, id, sx, ...rest },
+    {
+      checked,
+      icon: Icon,
+      label,
+      description,
+      onSelect,
+      disabled,
+      dense,
+      name,
+      id,
+      ...rest
+    },
     ref
   ) {
-    const theme = useTheme();
     const uid = React.useId();
     const radioId = id ?? uid;
     const labelId = `${radioId}-label`;
     const descId = `${radioId}-desc`;
 
-    const padding = dense ? 1.5 : 2;
+    const padding = dense ? "p-4" : "p-6";
 
     return (
-      <Card
+      <div
         ref={ref}
-        variant="outlined"
-        role="none" // radio handled by native <input>
+        role="none"
         aria-disabled={disabled || undefined}
-        sx={{
-          position: 'relative',
-          borderRadius: 2,
-          borderColor: checked ? 'primary.main' : 'divider',
-          transition: 'border-color 120ms ease, box-shadow 120ms ease, transform 80ms ease',
-          boxShadow: checked ? theme.shadows[2] : 'none',
-          opacity: disabled ? 0.6 : 1,
-          ...(sx as object),
-        }}
+        className={`
+          relative rounded-2xl border backdrop-blur-sm
+          transition-all duration-300 ease-out
+          ${checked 
+            ? "border-primary shadow-lg bg-gradient-to-br from-primary/10 to-backgroundShade1" 
+            : "border-border bg-background"} 
+          ${disabled 
+            ? "opacity-60 cursor-not-allowed" 
+            : "hover:shadow-xl hover:scale-[1.01]"} 
+        `}
         {...rest}
       >
-        {/* Native radio for proper semantics */}
+        {/* Native radio */}
         <input
           type="radio"
           id={radioId}
@@ -63,92 +69,67 @@ const RoleOptionCard = React.memo(
           tabIndex={-1}
         />
 
-        <CardActionArea
+        <button
+          type="button"
           onClick={!disabled ? onSelect : undefined}
-          onKeyDown={(e) => {
-            if (disabled) return;
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onSelect();
-            }
-          }}
           disabled={disabled}
-          sx={{
-            p: padding,
-            '&.Mui-focusVisible': {
-              outline: `3px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-              outlineOffset: 2,
-            },
-            '&:active': { transform: disabled ? 'none' : 'scale(0.995)' },
-            '&:hover': {
-              '.role-card__ring': { opacity: 1 },
-            },
-          }}
+          className={`
+            w-full text-left rounded-2xl transition-transform
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+            active:scale-[0.995] ${padding}
+          `}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box
+          <div className="flex items-center space-x-4">
+            {/* Icon circle */}
+            <div
               aria-hidden
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: alpha(theme.palette.primary.main, checked ? 0.16 : 0.1),
-                color: checked ? 'primary.main' : 'text.primary',
-                flexShrink: 0,
-                transition: 'background-color 120ms ease, color 120ms ease',
-              }}
+              className={`
+                w-12 h-12 rounded-full grid place-items-center flex-shrink-0
+                transition-all duration-300
+                ${checked 
+                  ? "bg-primary/20 text-primary ring-2 ring-primary/50" 
+                  : "bg-primary/10 text-text"} 
+              `}
             >
-              <Icon fontSize="small" />
-            </Box>
+              <Icon fontSize="medium" />
+            </div>
 
-            <CardContent sx={{ p: 0, flex: 1, '&:last-child': { pb: 0 } }}>
-              <Typography id={labelId} fontWeight={700} lineHeight={1.3}>
+            {/* Label + description */}
+            <div className="flex-1">
+              <div
+                id={labelId}
+                className="font-semibold text-lg leading-snug text-text"
+              >
                 {label}
-              </Typography>
-
+              </div>
               <Tooltip title={description} disableInteractive enterDelay={600}>
-                <Typography
+                <p
                   id={descId}
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}
+                  className="text-sm text-textSecondary line-clamp-2"
                 >
                   {description}
-                </Typography>
+                </p>
               </Tooltip>
-            </CardContent>
+            </div>
 
             {/* Check badge */}
-            <Box
+            <div
               aria-hidden
-              sx={{
-                ml: 1,
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: checked ? 'primary.main' : 'transparent',
-                border: checked ? 'none' : `2px solid ${theme.palette.divider}`,
-                transition: 'all 120ms ease',
-                flexShrink: 0,
-              }}
-              className="role-card__ring"
+              className={`
+                ml-2 w-6 h-6 rounded-full grid place-items-center flex-shrink-0
+                transition-all duration-300
+                ${checked 
+                  ? "bg-primary text-white scale-110 shadow-md" 
+                  : "border-2 border-border bg-background"}
+              `}
             >
-              {checked ? (
-                <CheckCircleRoundedIcon sx={{ color: 'primary.contrastText' }} fontSize="small" />
-              ) : null}
-            </Box>
-          </Stack>
-        </CardActionArea>
-      </Card>
+              {checked && (
+                <CheckCircleRoundedIcon fontSize="small" className="animate-scaleIn" />
+              )}
+            </div>
+          </div>
+        </button>
+      </div>
     );
   })
 );

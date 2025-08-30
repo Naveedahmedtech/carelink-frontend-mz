@@ -1,39 +1,43 @@
-import * as React from 'react';
-import { Box, Stack, Typography, useTheme, alpha } from '@mui/material';
-import StepItem from './StepItem';
+import * as React from "react";
+import StepItem from "./StepItem";
+import { useNavigate } from "react-router-dom";
 
-export type WizardStep = { title: string; description?: string };
+// export type WizardStep = { title: string; description?: string, path: string, subtitle?: string };
 
 export default function StepsRail({
   steps,
-  activeStep
+  activeStep,
 }: {
-  steps: WizardStep[];
+  steps: any;
   activeStep: number; // 1-based
 }) {
-  const theme = useTheme();
+  const navigate = useNavigate();
   return (
-    <Box sx={{ bgcolor: theme.palette.mode === 'dark' ? alpha('#2b3a8a', 0.35) : '#e8edff', p: { xs: 3, md: 4 } }}>
-      <Stack spacing={2}>
-        <Box>
-          <Typography variant="h5" fontWeight={800} gutterBottom>
+    <div className="bg-backgroundShade2 p-6 md:p-8 border-r border-border h-full">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-extrabold text-textDark mb-2">
             Activate your service
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h2>
+          <p className="text-sm text-textSecondary">
             To start using the service, complete the three steps below.
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
-        {steps.map((s, i) => (
-          <StepItem
-            key={s.title}
-            index={i + 1}
-            title={`Step ${i + 1}. ${s.title}`}
-            description={i + 1 === activeStep ? s.description : undefined}
-            active={i + 1 === activeStep}
-          />
-        ))}
-      </Stack>
-    </Box>
+        <div className="relative space-y-4">
+          <div className="absolute left-[14px] top-0 bottom-0 w-px bg-border" />
+          {steps.map((s:any, i:any) => (
+            <StepItem
+              key={s.title}
+              index={i + 1}
+              title={`Step ${i + 1}. ${s.title}`}
+              description={i + 1 === activeStep ? s.description : undefined}
+              active={i + 1 === activeStep}
+              onClick={() => navigate(s.path)} // 👈 use react-router
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

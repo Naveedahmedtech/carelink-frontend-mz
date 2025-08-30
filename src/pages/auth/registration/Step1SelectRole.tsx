@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from '../../../hooks';
 import { nextStep, setRole } from '../../../redux/features/auth/registrationSlice';
 import WizardLayout from '../../../components/wizard/WizardLayout';
 import RoleOptionCard from '../../../components/wizard/RoleOptionCard';
+import StickyActions from './components/StickyActions';
+import { STEPS } from './shared/constants';
 
 type RoleOption = {
   value: Role;
@@ -21,11 +23,6 @@ const ROLE_OPTIONS: RoleOption[] = [
   { value: 'trainer', label: 'Trainer', description: 'Deliver trainings, manage availability, file reports.', icon: AssignmentIndIcon },
 ];
 
-const STEPS = [
-  { title: 'Select your Role', description: 'Choose one option to continue.' },
-  { title: 'Create your Account', description: 'All the fields are required.' },
-  { title: 'Set up your Account', description: 'Personalize your experience.' },
-];
 
 // Where to go after selecting a role
 const ROLE_ROUTES: Record<Role, string> = {
@@ -56,7 +53,9 @@ export default function Step1SelectRole() {
       <Stack spacing={3}>
         <Box>
           <Typography variant="h6" fontWeight={800}>Step 1. Select your Role</Typography>
-          <Typography variant="body2" color="text.secondary">Pick the role that best matches your use.</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Pick the role that best matches your use.
+          </Typography>
         </Box>
 
         <Grid container spacing={1.5} role="radiogroup" aria-label="Select your role">
@@ -72,30 +71,15 @@ export default function Step1SelectRole() {
             </Grid>
           ))}
         </Grid>
-
-        <Divider />
-
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <MuiLink component={Link} to="/login" variant="body2" underline="hover" color="text.secondary">
-            Already have an account?
-          </MuiLink>
-          <Box>
-            <Button variant="text" sx={{ mr: 1.5 }} onClick={() => navigate(-1)}>Back</Button>
-            <Button
-              variant="contained"
-              onClick={handleContinue}
-              disabled={!selectedRole}
-              sx={{ textTransform: 'none', borderRadius: 8 }}
-            >
-              Continue
-            </Button>
-          </Box>
-        </Stack>
-
-        <Typography variant="caption" color="text.secondary" textAlign="center">
-          By continuing, you agree to the Terms and Privacy Policy.
-        </Typography>
       </Stack>
+
+      {/* Use StickyActions with custom onContinue */}
+      <StickyActions
+        disabled={!selectedRole}
+        onContinue={handleContinue}
+        note="By continuing, you agree to the Terms and Privacy Policy."
+      />
     </WizardLayout>
+
   );
 }

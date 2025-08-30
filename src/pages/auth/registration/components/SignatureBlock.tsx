@@ -1,5 +1,12 @@
-import * as React from 'react';
-import { Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import * as React from "react";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+
+
+import { format, parseISO, isValid as isValidDate } from "date-fns";
+import ReactSignatureCanvas from "react-signature-canvas";
+import { Button, Stack } from "@mui/material";
 
 export type SignatureValue = { dataUrl: string | null; date: string };
 
@@ -10,103 +17,110 @@ export default function SignatureBlock({
   value: SignatureValue;
   onChange: (v: SignatureValue) => void;
 }) {
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-  const drawing = React.useRef(false);
+  const sigRef = React.useRef<ReactSignatureCanvas | null>(null);
 
-  const getCtx = () => canvasRef.current?.getContext('2d') || null;
-
-  const start = (e: React.MouseEvent | React.TouchEvent) => {
-    drawing.current = true;
-    const ctx = getCtx();
-    if (!ctx) return;
-    const { x, y } = pointFromEvent(e);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const move = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawing.current) return;
-    const ctx = getCtx();
-    if (!ctx) return;
-    const { x, y } = pointFromEvent(e);
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-  };
-
-  const end = () => {
-    drawing.current = false;
-    const dataUrl = canvasRef.current?.toDataURL('image/png') || null;
+  const snapshotToValue = React.useCallback(() => {
+    const sig = sigRef.current;
+    if (!sig) return;
+    const dataUrl = sig.isEmpty()
+      ? null
+      : sig.getTrimmedCanvas().toDataURL("image/png");
     onChange({ ...value, dataUrl });
-  };
+  }, [onChange, value]);
 
-  const clear = () => {
-    const ctx = getCtx();
-    const c = canvasRef.current;
-    if (!ctx || !c) return;
-    ctx.clearRect(0, 0, c.width, c.height);
+  const clear = React.useCallback(() => {
+    sigRef.current?.clear();
     onChange({ ...value, dataUrl: null });
-  };
+  }, [onChange, value]);
+
+  const undo = React.useCallback(() => {
+    const sig = sigRef.current;
+    if (!sig) return;
+    const data = sig.toData();
+    if (data.length === 0) return;
+    data.pop();
+    sig.fromData(data);
+    snapshotToValue();
+  }, [snapshotToValue]);
 
   React.useEffect(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    // initial crisp size
-    c.width = c.clientWidth * 2;
-    c.height = 160 * 2;
-    const ctx = getCtx();
-    if (ctx) ctx.scale(2, 2);
-  }, []);
+    const sig = sigRef.current;
+    if (!sig) return;
+    if (value.dataUrl) {
+      try {
+        sig.fromDataURL(value.dataUrl);
+      } catch {
+        sig.clear();
+      }
+    } else {
+      sig.clear();
+    }
+  }, [value.dataUrl]);
 
-  const pointFromEvent = (e: any) => {
-    const c = canvasRef.current!;
-    const rect = c.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  };
+  // DatePicker (date-fns uses native Date objects)
+  const muiDateValue: Date | null =
+    value.date && isValidDate(parseISO(value.date)) ? parseISO(value.date) : null;
 
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 2, p: { xs: 2, sm: 3 } }}>
-      <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
-        Signature
-      </Typography>
-      <Box
-        sx={{
-          border: '1px dashed',
-          borderColor: 'divider',
-          borderRadius: 1.5,
-          p: 1,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={start}
-          onMouseMove={move}
-          onMouseUp={end}
-          onMouseLeave={end}
-          onTouchStart={start}
-          onTouchMove={move}
-          onTouchEnd={end}
-          style={{ width: '100%', height: 160, display: 'block', cursor: 'crosshair' }}
-        />
-      </Box>
+    <div className="rounded-xl border border-border bg-backgroundShade1 p-4 sm:p-6">
+      <h3 className="text-base font-bold mb-3 text-text">Signature</h3>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.5} sx={{ mt: 1 }}>
-        <TextField
-          label="Date"
-          type="date"
-          size="small"
-          fullWidth
-          value={value.date}
-          onChange={(e) => onChange({ ...value, date: e.target.value })}
-          InputLabelProps={{ shrink: true }}
-        />
-        <Button variant="outlined" onClick={clear}>Clear</Button>
-      </Stack>
-    </Paper>
+      {/* Narrower + centered */}
+      <div className="mx-auto w-full max-w-[560px]">
+        <div className="border border-dashed border-border rounded-lg p-2 bg-backgroundShade1">
+          <ReactSignatureCanvas
+            ref={sigRef}
+            penColor="#111"
+            minWidth={0.6}
+            maxWidth={2.6}
+            throttle={16}
+            backgroundColor="#ffffff"
+            onEnd={snapshotToValue}
+            canvasProps={{
+              style: {
+                width: "100%",
+                height: 160,
+                display: "block",
+                cursor: "crosshair",
+                borderRadius: 8,
+              },
+            }}
+          />
+        </div>
+
+        {/* Toolbar */}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} className="mt-3">
+          <div className="flex-1">
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Date"
+                value={muiDateValue}
+                onChange={(d: Date | null) =>
+                  onChange({
+                    ...value,
+                    date: d && isValidDate(d) ? format(d, "yyyy-MM-dd") : "",
+                  })
+                }
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </div>
+
+          <div className="flex gap-1 sm:self-end">
+            <Button variant="outlined" onClick={undo}>
+              Undo
+            </Button>
+            <Button color="error" variant="outlined" onClick={clear}>
+              Clear
+            </Button>
+          </div>
+        </Stack>
+      </div>
+    </div>
   );
 }

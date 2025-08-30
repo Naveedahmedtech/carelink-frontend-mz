@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { Box, Paper, Typography, useTheme, alpha } from '@mui/material';
+import * as React from "react";
 
 type Props = {
   title: string;
@@ -9,32 +8,25 @@ type Props = {
 };
 
 export default function SectionCard({ title, icon, children, subtitle }: Props) {
-  const theme = useTheme();
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', borderColor: alpha(theme.palette.primary.main, 0.15) }}>
-      <Box
-        sx={{
-          px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1,
-          bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.18) : alpha(theme.palette.primary.main, 0.08),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`
-        }}
-      >
-        <Box
-          sx={{
-            width: 30, height: 30, minWidth: 30, borderRadius: '50%',
-            display: 'grid', placeItems: 'center',
-            bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.3) : alpha(theme.palette.primary.main, 0.18),
-            color: theme.palette.primary.main
-          }}
-        >
-          {icon}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography fontWeight={800} sx={{ lineHeight: 1.2 }}>{title}</Typography>
-          {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
-        </Box>
-      </Box>
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>
-    </Paper>
+    <div
+      className="
+        rounded-2xl bg-backgroundShade1 border border-border/70
+        overflow-hidden transition 
+      "
+    >
+      {/* Header */}
+      <div className="px-6 pt-5 pb-4 flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-extrabold text-text">{title}</h3>
+          {subtitle && (
+            <p className="text-sm text-textSecondary mt-0.5">{subtitle}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="px-6 pb-6">{children}</div>
+    </div>
   );
 }

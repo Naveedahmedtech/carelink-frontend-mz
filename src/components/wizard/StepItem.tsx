@@ -1,44 +1,58 @@
-import * as React from 'react';
-import { Paper, Stack, Typography, Box, useTheme, alpha } from '@mui/material';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded';
+import * as React from "react";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUncheckedRounded";
 
 export default function StepItem({
-  index, title, description, active,
+  index,
+  title,
+  description,
+  active,
+  onClick,
 }: {
-  index: number; title: string; description?: string; active: boolean;
+  index: number;
+  title: string;
+  description?: string;
+  active: boolean;
+  onClick?: () => void;
 }) {
-  const theme = useTheme();
-  const activeColor = theme.palette.primary.main;
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 2, borderRadius: 2,
-        borderColor: active ? activeColor : 'divider',
-        boxShadow: active ? theme.shadows[1] : 'none',
-        bgcolor: active ? alpha(activeColor, 0.06) : 'background.paper',
-      }}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`
+        w-full text-left rounded-lg border p-4 flex transition
+        ${active ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-backgroundShade1"}
+        hover:border-primary/70 hover:bg-backgroundShade2 focus:outline-none focus:ring-2 focus:ring-primary/50
+      `}
     >
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <Box sx={{ width: 4, borderRadius: 2, bgcolor: active ? activeColor : 'divider', alignSelf: 'stretch' }} />
-        <Box sx={{ flex: 1 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            {active ? <CheckCircleRoundedIcon fontSize="small" color="primary" /> :
-              <RadioButtonUncheckedRoundedIcon sx={{ color: 'text.disabled' }} fontSize="small" />}
-            <Typography fontWeight={700}>{title}</Typography>
-          </Stack>
-          {description ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {description}
-            </Typography>
+      {/* Left vertical bar */}
+      <div
+        className={`
+          w-1 rounded-lg self-stretch mr-4
+          ${active ? "bg-primary" : "bg-border"}
+        `}
+      />
+
+      {/* Content */}
+      <div className="flex-1">
+        <div className="flex items-center space-x-2">
+          {active ? (
+            <CheckCircleRoundedIcon className="text-primary" fontSize="small" />
           ) : (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-              Step {index}
-            </Typography>
+            <RadioButtonUncheckedRoundedIcon
+              className="text-textMuted"
+              fontSize="small"
+            />
           )}
-        </Box>
-      </Stack>
-    </Paper>
+          <span className="font-bold text-text">{title}</span>
+        </div>
+
+        {description ? (
+          <p className="text-sm text-textSecondary mt-1">{description}</p>
+        ) : (
+          <p className="text-xs text-textSecondary mt-1">Step {index}</p>
+        )}
+      </div>
+    </button>
   );
 }

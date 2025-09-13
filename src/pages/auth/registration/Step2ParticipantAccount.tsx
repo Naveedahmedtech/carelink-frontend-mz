@@ -1,80 +1,130 @@
-import * as React from 'react';
-import { Container, Stack } from '@mui/material';
-import WizardLayout from '../../../components/wizard/WizardLayout';
-import { useAppDispatch, useAppSelector } from '../../../hooks';
-import { nextStep, setAccountDraft /*, setRole*/ } from '../../../redux/features/auth/registrationSlice';
-import ProgressHeader from './components/ProgressHeader';
-import IdentitySection from './components/IdentitySection';
-import GuardianSection from './components/GuardianSection';
-import PreferencesFundingSection from './components/PreferencesFundingSection';
-import StickyActions from './components/StickyActions';
-import { STEPS } from './shared/constants';
-import { FundingType, RegistrationErrors, RegistrationValues } from './shared/types';
-import { useNavigate } from 'react-router-dom';
+import * as React from "react";
+import { Container, Stack } from "@mui/material";
+import WizardLayout from "../../../components/wizard/WizardLayout";
+import { useAppDispatch, useAppSelector } from "../../../hooks";
+import {
+  nextStep,
+  setAccountDraft,
+} from "../../../redux/features/auth/registrationSlice";
+import ProgressHeader from "./components/ProgressHeader";
+import IdentitySection from "./components/IdentitySection";
+import GuardianSection from "./components/GuardianSection";
+import PreferencesFundingSection from "./components/PreferencesFundingSection";
+import StickyActions from "./components/StickyActions";
+import { STEPS } from "./shared/constants";
+import {
+  FundingType,
+  RegistrationErrors,
+  RegistrationValues,
+} from "./shared/types";
+import { useNavigate } from "react-router-dom";
+import { useUpsertParticipantMutation } from "../../../redux/features/participantApi";
+import { toast } from "react-toastify";
 
-// NEW: shared Role type for the header switcher
-type Role = 'participant' | 'trainer'  | 'admin';
+type Role = "participant" | "trainer" | "admin";
 
 const ROLE_ROUTES: Record<Role, string> = {
-  participant: '/auth/register/participant',       // step 1 route
-  trainer: '/auth/register/trainer',
-  admin: '/auth/register/admin',
+  participant: "/auth/register/participant",
+  trainer: "/auth/register/trainer",
+  admin: "/auth/register/admin",
 };
+
+// 🔹 localStorage key
+const STORAGE_KEY = "participant-registration-step1";
 
 export default function Step1ParticipantRegistration() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const role = useAppSelector((s) => s.registration.role) as Role;
 
-  // If you still want to hard-guard participant only, uncomment:
-  // React.useEffect(() => {
-  //   if (role !== 'participant') navigate('/register/role', { replace: true });
-  // }, [role, navigate]);
+  const [upsertParticipant, { isLoading }] = useUpsertParticipantMutation();
 
-  // NEW: handle role change from the header
   const handleRoleChange = (r: Role) => {
-    // If you keep role in Redux, set it here so other steps see it:
-    // dispatch(setRole(r));
-    // Navigate to that role's step 1 route (adjust if your paths differ).
     navigate(ROLE_ROUTES[r], { replace: true });
   };
 
   const [isMinor, setIsMinor] = React.useState(false);
-  const [fundingType, setFundingType] = React.useState<FundingType>('plan');
+  const [fundingType, setFundingType] =
+    React.useState<FundingType>("plan");
 
+  // 🔹 Default test values (so form is pre-filled for testing)
   const [values, setValues] = React.useState<RegistrationValues>({
-    fullName: '', ndisNumber: '', dob: '', address: '', email: '', phone: '',
-    guardianName: '', guardianPhone: '', guardianEmail: '',
-    interests: [], availability: {}, planManagerName: '', planManagerEmail: '',
+    fullName: "Test User",
+    ndisNumber: "123456789",
+    dob: "1990-01-01",
+    address: "123 Main Street, Sydney",
+    email: "test@example.com",
+    phone: "+61412345678",
+    guardianName: "",
+    guardianPhone: "",
+    guardianEmail: "",
+    interests: ["Fitness", "Cooking"],
+    availability: { Mon: "9am–12pm", Wed: "1pm–5pm" },
+    planManagerName: "Plan Manager Pty Ltd",
+    planManagerEmail: "plan.manager@example.com",
   });
 
-  const onChange = (key: keyof RegistrationValues) =>
+  // 🔹 Load from localStorage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setValues(parsed.values || values);
+      setIsMinor(parsed.isMinor ?? false);
+      setFundingType(parsed.fundingType ?? "plan");
+    }
+  }, []);
+
+  // 🔹 Save to localStorage whenever values/isMinor/fundingType change
+  React.useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ values, isMinor, fundingType })
+    );
+  }, [values, isMinor, fundingType]);
+
+  const onChange =
+    (key: keyof RegistrationValues) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setValues((s) => ({ ...s, [key]: e.target.value }));
 
+  // ✅ wrapper for IdentitySection DatePicker etc.
+  const setValue = (key: keyof RegistrationValues, v: any) =>
+    setValues((s) => ({ ...s, [key]: v }));
+
   const setDayAvailability = (day: string, val: string) =>
-    setValues((s) => ({ ...s, availability: { ...s.availability, [day]: val } }));
+    setValues((s) => ({
+      ...s,
+      availability: { ...s.availability, [day]: val },
+    }));
 
   const setInterests = (tags: string[]) =>
     setValues((s) => ({ ...s, interests: tags }));
 
-  // validation (unchanged)
+  // validation
   const errors = React.useMemo<RegistrationErrors>(() => {
     const e: RegistrationErrors = {};
-    if (!values.fullName.trim()) e.fullName = 'Required';
-    if (!values.ndisNumber.trim()) e.ndisNumber = 'Required';
-    if (!values.dob) e.dob = 'Required';
-    if (!values.address.trim()) e.address = 'Required';
-    if (!/^\S+@\S+\.\S+$/.test(values.email)) e.email = 'Enter a valid email';
-    if (!/^\+?[0-9()\-.\s]{7,}$/.test(values.phone)) e.phone = 'Enter a valid phone';
+    if (!values.fullName?.trim()) e.fullName = "Required";
+    if (!values.ndisNumber?.trim()) e.ndisNumber = "Required";
+    if (!values.dob) e.dob = "Required";
+    if (!values.address?.trim()) e.address = "Required";
+    if (!/^\S+@\S+\.\S+$/.test(values.email))
+      e.email = "Enter a valid email";
+    if (!/^\+?[0-9()\-.\s]{7,}$/.test(values.phone))
+      e.phone = "Enter a valid phone";
     if (isMinor) {
-      if (!values.guardianName.trim()) e.guardianName = 'Required for minors';
-      if (!/^\+?[0-9()\-.\s]{7,}$/.test(values.guardianPhone)) e.guardianPhone = 'Enter a valid phone';
-      if (!/^\S+@\S+\.\S+$/.test(values.guardianEmail)) e.guardianEmail = 'Enter a valid email';
+      if (!values.guardianName?.trim())
+        e.guardianName = "Required for minors";
+      if (!/^\+?[0-9()\-.\s]{7,}$/.test(values.guardianPhone))
+        e.guardianPhone = "Enter a valid phone";
+      if (!/^\S+@\S+\.\S+$/.test(values.guardianEmail))
+        e.guardianEmail = "Enter a valid email";
     }
-    if (fundingType !== 'ndia') {
-      if (!values.planManagerName.trim()) e.planManagerName = 'Required';
-      if (!/^\S+@\S+\.\S+$/.test(values.planManagerEmail)) e.planManagerEmail = 'Enter a valid email';
+    if (fundingType !== "ndia") {
+      if (!values.planManagerName?.trim())
+        e.planManagerName = "Required";
+      if (!/^\S+@\S+\.\S+$/.test(values.planManagerEmail))
+        e.planManagerEmail = "Enter a valid email";
     }
     return e;
   }, [values, isMinor, fundingType]);
@@ -82,40 +132,95 @@ export default function Step1ParticipantRegistration() {
   const canContinue = Object.keys(errors).length === 0;
 
   const progressParts = [
-    !!values.fullName.trim(), !!values.ndisNumber.trim(), !!values.dob, !!values.address.trim(),
-    /^\S+@\S+\.\S+$/.test(values.email), /^\+?[0-9()\-.\s]{7,}$/.test(values.phone),
-    ...(isMinor ? [!!values.guardianName.trim(),
-      /^\+?[0-9()\-.\s]{7,}$/.test(values.guardianPhone),
-      /^\S+@\S+\.\S+$/.test(values.guardianEmail)] : []),
-    ...(fundingType !== 'ndia' ? [!!values.planManagerName.trim(),
-      /^\S+@\S+\.\S+$/.test(values.planManagerEmail)] : []),
+    !!values.fullName?.trim(),
+    !!values.ndisNumber?.trim(),
+    !!values.dob,
+    !!values.address?.trim(),
+    /^\S+@\S+\.\S+$/.test(values.email),
+    /^\+?[0-9()\-.\s]{7,}$/.test(values.phone),
+    ...(isMinor
+      ? [
+          !!values.guardianName?.trim(),
+          /^\+?[0-9()\-.\s]{7,}$/.test(values.guardianPhone),
+          /^\S+@\S+\.\S+$/.test(values.guardianEmail),
+        ]
+      : []),
+    ...(fundingType !== "ndia"
+      ? [
+          !!values.planManagerName?.trim(),
+          /^\S+@\S+\.\S+$/.test(values.planManagerEmail),
+        ]
+      : []),
   ];
-  const progress = Math.round((progressParts.filter(Boolean).length / Math.max(progressParts.length, 1)) * 100);
+  const progress = Math.round(
+    (progressParts.filter(Boolean).length /
+      Math.max(progressParts.length, 1)) *
+      100
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canContinue) return;
-    dispatch(setAccountDraft({ role: 'participant', ...values, isMinor, fundingType }));
-    dispatch(nextStep());
-    navigate('/auth/register/participant/agreement');
+
+    dispatch(
+      setAccountDraft({
+        role: "participant",
+        ...values,
+        isMinor,
+        fundingType,
+      })
+    );
+
+    try {
+      await upsertParticipant({
+        step: 1,
+        ...values,
+        isMinor,
+        fundingType,
+      }).unwrap();
+
+      // ✅ Only go next if API succeeds
+      dispatch(nextStep());
+      navigate("/auth/register/participant/agreement");
+    } catch (err: any) {
+      console.error("Failed to save participant:", err);
+
+      // 🔹 Show snackbar error
+      toast.error(
+        err?.data?.message || "Failed to save registration. Please try again."
+      );
+    }
   };
 
   return (
     <WizardLayout steps={STEPS} activeStep={1}>
       <Container maxWidth="md" sx={{ px: { xs: 1.5, sm: 2 } }}>
-        <Stack component="form" spacing={{ xs: 2, sm: 3 }} onSubmit={handleSubmit}>
-          {/* NEW: role-aware header */}
+        <Stack
+          component="form"
+          spacing={{ xs: 2, sm: 3 }}
+          onSubmit={handleSubmit}
+        >
           <ProgressHeader
             step={1}
             totalSteps={3}
             title="Participant Registration"
-            // subtitle="Provide your personal details, preferences, and funding info."
             progress={progress}
             role={role}
           />
 
-          <IdentitySection values={values} errors={errors} onChange={onChange} />
-          <GuardianSection isMinor={isMinor} setIsMinor={setIsMinor} values={values} errors={errors} onChange={onChange} />
+          <IdentitySection
+            values={values}
+            errors={errors}
+            onChange={onChange}
+            setValue={setValue}
+          />
+          <GuardianSection
+            isMinor={isMinor}
+            setIsMinor={setIsMinor}
+            values={values}
+            errors={errors}
+            onChange={onChange}
+          />
           <PreferencesFundingSection
             values={values}
             errors={errors}
@@ -125,7 +230,7 @@ export default function Step1ParticipantRegistration() {
             setDayAvailability={setDayAvailability}
             setInterests={setInterests}
           />
-          <StickyActions disabled={!canContinue} />
+          <StickyActions disabled={!canContinue || isLoading} />
         </Stack>
       </Container>
     </WizardLayout>

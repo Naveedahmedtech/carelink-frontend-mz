@@ -8,11 +8,14 @@ import CreateLoginSection from "./components/CreateLoginSection";
 import StickyActions from "./components/StickyActions";
 import { STEPS } from "./shared/constants";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useSetPasswordMutation } from "../../../redux/features/authApi";
 
 export default function Step3CreateLogin() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const role = useAppSelector((s) => s.registration.role);
+  const trainerProfile = useAppSelector((s) => s.trainer);
 
   const [values, setValues] = React.useState({
     password: "",
@@ -20,6 +23,22 @@ export default function Step3CreateLogin() {
   });
   const [errors, setErrors] = React.useState<{ password?: string; confirmPassword?: string }>({});
   const [triedSubmit, setTriedSubmit] = React.useState(false);
+
+  const [setPassword, { isLoading }] = useSetPasswordMutation();
+
+  // derive email
+  let email: string | null = trainerProfile?.email || null;
+  if (!email) {
+    const step1Saved = localStorage.getItem("participant-registration-step1");
+    if (step1Saved) {
+      try {
+        const parsed = JSON.parse(step1Saved);
+        email = parsed.values?.email || null;
+      } catch {
+        email = null;
+      }
+    }
+  }
 
   const onChange =
     (key: "password" | "confirmPassword") =>
@@ -32,8 +51,8 @@ export default function Step3CreateLogin() {
     const e: { password?: string; confirmPassword?: string } = {};
     if (!values.password) {
       e.password = "Password is required";
-    } else if (values.password.length < 6) {
-      e.password = "Password must be at least 6 characters";
+    } else if (values.password.length < 8) {
+      e.password = "Password must be at least 8 characters";
     }
     if (!values.confirmPassword) {
       e.confirmPassword = "Please confirm password";
@@ -45,16 +64,26 @@ export default function Step3CreateLogin() {
 
   const canContinue = Object.keys(errors).length === 0;
 
-  const progress = canContinue ? 100 : 50; // just an example; can be more granular
+  const progress = canContinue ? 100 : 50;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTriedSubmit(true);
-    if (!canContinue) return;
+    if (!canContinue || !email) {
+      toast.error("Please fix errors before continuing");
+      return;
+    }
 
-    // TODO: dispatch a register action with credentials
-    dispatch(nextStep());
-    navigate("/auth/sign-in"); // adjust final route
+    try {
+      await setPassword({ email, password: values.password }).unwrap();
+      toast.success("Password set successfully!");
+      dispatch(nextStep());
+      navigate("/auth/sign-in");
+    } catch (err: any) {
+      const message = err?.data?.message || "Failed to set password";
+      toast.error(message);
+      console.error("Failed to set password", err);
+    }
   };
 
   return (
@@ -65,14 +94,16 @@ export default function Step3CreateLogin() {
             step={3}
             totalSteps={3}
             title="Create Login"
-            // subtitle="Choose a secure password for your account."
             progress={progress}
             role={role || "participant"}
           />
 
           <CreateLoginSection values={values} errors={errors} onChange={onChange} />
 
-          <StickyActions disabled={!canContinue} onContinue={() => navigate('/auth/participant/book-interview')} />
+          <StickyActions
+            disabled={!canContinue || isLoading}
+            onContinue={handleSubmit}
+          />
         </Stack>
       </Container>
     </WizardLayout>

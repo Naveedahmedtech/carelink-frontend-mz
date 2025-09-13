@@ -1,27 +1,21 @@
 // store.ts
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authReducer from './features/authSlice';
+import trainerReducer from './features/trainerSlice';
 import registrationReducer from './features/auth/registrationSlice'; 
 
 import { authApi } from './features/authApi';
-import { projectApi } from './features/projectsApi';
-import { issueApi } from './features/issueApi';
-import { orderApi } from './features/orderApi';
-import { companyApi } from './features/companyApi';
-import { commentApi } from './features/commentApi';
-import { checklistApi } from './features/checklistApi';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; 
+import { trainerApi } from './features/trainerApi';
+import { participantApi } from './features/participantApi';
 
 const rootReducer = combineReducers({
   auth: authReducer,
-  registration: registrationReducer,            
+  trainer: trainerReducer,          
+  registration: registrationReducer,  
   [authApi.reducerPath]: authApi.reducer,
-  [projectApi.reducerPath]: projectApi.reducer,
-  [issueApi.reducerPath]: issueApi.reducer,
-  [orderApi.reducerPath]: orderApi.reducer,
-  [companyApi.reducerPath]: companyApi.reducer,
-  [commentApi.reducerPath]: commentApi.reducer,
-  [checklistApi.reducerPath]: checklistApi.reducer,
+  [trainerApi.reducerPath]: trainerApi.reducer,
+  [participantApi.reducerPath]: participantApi.reducer,
 });
 
 export const store = configureStore({
@@ -29,12 +23,8 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .concat(authApi.middleware)
-      .concat(projectApi.middleware)
-      .concat(issueApi.middleware)
-      .concat(orderApi.middleware)
-      .concat(companyApi.middleware)
-      .concat(commentApi.middleware)
-      .concat(checklistApi.middleware),
+      .concat(trainerApi.middleware)
+      .concat(participantApi.middleware)
 });
 
 export type RootState = ReturnType<typeof store.getState>;

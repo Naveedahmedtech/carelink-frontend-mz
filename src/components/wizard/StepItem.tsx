@@ -16,9 +16,9 @@ export default function StepItem({
   onClick?: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
+      // type="button"
+      // onClick={onClick}
       className={`
         w-full text-left rounded-lg border p-4 flex transition
         ${active ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-backgroundShade1"}
@@ -53,6 +53,6 @@ export default function StepItem({
           <p className="text-xs text-textSecondary mt-1">Step {index}</p>
         )}
       </div>
-    </button>
+    </div>
   );
 }

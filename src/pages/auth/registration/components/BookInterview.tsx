@@ -24,6 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { googleCalendarCreateUrl } from "../../../../utils/calendar";
 import CareLinkAppBar from "../../../../components/wizard/AppBar";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import { clearTrainerProfile } from "../../../../redux/features/trainerSlice";
+import { useAppDispatch } from "../../../../redux/store";
 
 const DURATIONS = [15, 30, 45] as const;
 const MOCK_TIMES = ["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "14:30", "15:00"];
@@ -46,6 +48,18 @@ export default function OwnerInterviewBookingPage() {
   const minDate = today;
   const maxDate = addDays(today, 21);
 
+  const dispatch = useAppDispatch();
+
+
+  // ---------- new effect to check booking status ----------
+  React.useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("ownerInterviewBooking") || "null");
+
+    if (stored?.status === "confirmed") {
+      navigate("/auth/sign-in");
+    }
+  }, [navigate]);
+
   const selectedStart = React.useMemo(() => {
     if (!selectedDate || !selectedTime) return null;
     const [h, m] = selectedTime.split(":").map(Number);
@@ -59,6 +73,19 @@ export default function OwnerInterviewBookingPage() {
       setSnack({ open: true, msg: "Please fill required fields.", severity: "error" });
       return;
     }
+    const bookingData = {
+      name,
+      email,
+      date: selectedDate?.toISOString(),
+      time: selectedTime,
+      duration,
+      timezone: tz,
+      status: "confirmed", // mark initial status as pending
+    };
+
+    // Save booking in localStorage
+    localStorage.setItem("ownerInterviewBooking", JSON.stringify(bookingData));
+
     const url = googleCalendarCreateUrl({
       title: "Interview with Project Owner",
       start: selectedStart,
@@ -68,16 +95,25 @@ export default function OwnerInterviewBookingPage() {
       guests: [email, "technaveedahmed@gmail.com"],
     });
     window.open(url, "_blank");
-navigate("/thank-you", {
-  state: {
-    name,
-    email,
-    date: selectedDate?.toISOString(),
-    time: selectedTime,
-    duration,
-    timezone: tz,
-  },
-});
+
+// clearTrainerProfile
+    // ✅ Clear localStorage keys after booking
+    localStorage.removeItem("ownerInterviewBooking");
+    localStorage.removeItem("trainer-training-progress");
+
+      dispatch(clearTrainerProfile());
+
+
+    navigate("/thank-you", {
+      state: {
+        name,
+        email,
+        date: selectedDate?.toISOString(),
+        time: selectedTime,
+        duration,
+        timezone: tz,
+      },
+    });
 
   };
 

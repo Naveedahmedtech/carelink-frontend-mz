@@ -1,11 +1,38 @@
 // -----------------------------------------------
 // src/pages/trainers/onboarding/shared/constants.ts
 export const TRAINER_STEPS = [
-  { key: "identity", short: "Details", title: "Your Details", subtitle: "Contact info and address" },
-  { key: "availability", short: "Availability", title: "Availability & Travel", subtitle: "When and where you can work" },
-  { key: "specialisations", short: "Specialisations", title: "Areas of Specialisation", subtitle: "Tell us your strengths" },
-  { key: "documents", short: "Documents", title: "Upload Documents", subtitle: "Provide screening & certificates" },
+  {
+    key: "identity",
+    short: "Details",
+    title: "Your Details",
+    subtitle: "Contact info and address",
+  },
+  {
+    key: "availability",
+    short: "Availability",
+    title: "Availability & Travel",
+    subtitle: "When and where you can work",
+  },
+  {
+    key: "specialisations",
+    short: "Specialisations",
+    title: "Areas of Specialisation",
+    subtitle: "Tell us your strengths",
+  },
+  {
+    key: "documents",
+    short: "Documents",
+    title: "Upload Documents",
+    subtitle: "Provide screening & certificates",
+  },
+  {
+    key: "training",
+    short: "Training",
+    title: "Training & Assessment",
+    subtitle: "Complete modules and quizzes",
+  },
 ] as const;
+
 
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 

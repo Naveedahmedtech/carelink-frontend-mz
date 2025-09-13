@@ -16,6 +16,7 @@ const CHECKLIST_BASE = `${API_BASE}/checklist-templates`;
 export const API_ROUTES = {
   AUTH: {
     REGISTER: `${AUTH_BASE}/register`,
+    SET_PASSWORD: `${AUTH_BASE}/set-password`,
     LOGIN: `${AUTH_BASE}/sign-in`,
     LOGOUT: `${AUTH_BASE}/logout`,
     SEND_CODE: `${AUTH_BASE}/email/send-code`,

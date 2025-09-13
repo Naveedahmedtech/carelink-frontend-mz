@@ -22,6 +22,9 @@ import TrainerSchedulePage from '../pages/dashboard/trainer/my-schedule/index.ts
 import TrainerBookingPage from '../pages/dashboard/trainer/booking/index.tsx';
 import TrainerTimesheetPage from '../pages/dashboard/trainer/time-sheet/index.tsx';
 import TrainerReportsPage from '../pages/dashboard/trainer/shift-reports/index.tsx';
+import TrainerProfile from '../pages/dashboard/trainer/profile/index.tsx';
+import ParticipantProfile from '../pages/dashboard/participant/profile/index.tsx';
+import TrainerListPage from '../pages/dashboard/admin/trainer/index.tsx';
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -55,10 +58,12 @@ export const router = createBrowserRouter(
           <Route path="request" element={<RequestShiftPage />} />
           <Route path="previous" element={<PreviousShiftsPage />} />
           <Route path="notes" element={<ParticipantNotesPage />} />
+          <Route path="profile/participant" element={<ParticipantProfile />} />
 
           {/* admin pages */}
+          <Route path="admin" element={<div>ADMIN</div>} />
           <Route path="participants" element={<div>Participants</div>} />
-          <Route path="trainers" element={<div>Trainers</div>} />
+          <Route path="trainers" element={<TrainerListPage />} />
           <Route path="calendar" element={<div>Calendar</div>} />
 
           {/* trainer pages */}
@@ -67,6 +72,7 @@ export const router = createBrowserRouter(
           <Route path="previous-shifts" element={<TrainerBookingPage />} />
           <Route path="reports" element={<TrainerReportsPage />} />
           <Route path="time-sheets" element={<TrainerTimesheetPage />} />
+          <Route path="profile/trainer" element={<TrainerProfile />} />
 
 
 

@@ -14,13 +14,13 @@ export const STEPS = [
     description: "Choose your username and password.",
     path: "/auth/register/participant/create-login",
   },
-  // {
-  //   title: "Book Interview",
-  //   description: "Activate your account after the interview.",
-  //   path: "/auth/register/participant/book-interview",
-  // },
 ];
 
+// {
+//   title: "Book Interview",
+//   description: "Activate your account after the interview.",
+//   path: "/auth/register/participant/book-interview",
+// },
 
 export const INTERESTS = [
   'Boxing', 'Fitness', 'Outdoors', 'Cooking', 'Community Participation', 'Arts & Crafts'

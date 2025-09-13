@@ -27,7 +27,7 @@ export default function TrainerIdentitySection({
     sx: {
       "& .MuiOutlinedInput-root": {
         bgcolor: "var(--color-background-shade-1)",
-        borderRadius: "12px",
+        borderRadius: "6px",
         "& fieldset": { borderColor: "var(--color-border)" },
         "&:hover fieldset": { borderColor: "var(--color-primary)" },
         "&.Mui-focused fieldset": { borderColor: "var(--color-primary)", borderWidth: 2 },

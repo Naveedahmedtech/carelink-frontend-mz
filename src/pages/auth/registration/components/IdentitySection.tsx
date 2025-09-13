@@ -5,7 +5,7 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { GridLegacy as Grid } from '@mui/material';
+import { GridLegacy as Grid } from "@mui/material";
 
 import {
   EmailRounded as EmailIcon,
@@ -60,20 +60,33 @@ export default function IdentitySection({
             helper="If applicable. Format: 9 digits."
             autoComplete="off"
             inputMode="numeric"
-            icon={<ShieldIcon fontSize="small" sx={{ color: "var(--color-text-secondary)" }} />}
+            icon={
+              <ShieldIcon
+                fontSize="small"
+                sx={{ color: "var(--color-text-secondary)" }}
+              />
+            }
           />
         </Grid>
 
         <Grid item xs={12} sm={6}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
-              label="Date of Birth"
+              disableFuture
               value={values.dob ? new Date(values.dob) : null}
-              onChange={(newVal) =>
-                setValue?.("dob", newVal ? newVal.toISOString().split("T")[0] : "")
-              }
+              onChange={(newVal) => {
+                // Always check type
+                if (newVal instanceof Date && !isNaN(newVal.getTime())) {
+                  // store as ISO string YYYY-MM-DD
+                  setValue?.("dob", newVal.toISOString().split("T")[0]);
+                } else {
+                  setValue?.("dob", "");
+                }
+              }}
               slotProps={{
+                popper: { sx: { zIndex: 1500 } }, // ensures calendar is not hidden
                 textField: {
+                  label: "Date of Birth",
                   fullWidth: true,
                   size: "small",
                   error: Boolean(errors.dob),
@@ -81,9 +94,7 @@ export default function IdentitySection({
                   InputProps: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Box sx={{ color: "var(--color-text-secondary)" }}>
-                          📅
-                        </Box>
+                        <Box sx={{ color: "var(--color-text-secondary)" }}>📅</Box>
                       </InputAdornment>
                     ),
                   },
@@ -94,6 +105,7 @@ export default function IdentitySection({
           </LocalizationProvider>
         </Grid>
 
+
         <Grid item xs={12} sm={6}>
           <Field
             label="Residential Address"
@@ -102,7 +114,12 @@ export default function IdentitySection({
             error={errors.address}
             helper="We’ll add address autocomplete later."
             autoComplete="street-address"
-            icon={<HomeIcon fontSize="small" sx={{ color: "var(--color-text-secondary)" }} />}
+            icon={
+              <HomeIcon
+                fontSize="small"
+                sx={{ color: "var(--color-text-secondary)" }}
+              />
+            }
           />
         </Grid>
 
@@ -114,7 +131,12 @@ export default function IdentitySection({
             error={errors.email}
             autoComplete="email"
             inputMode="email"
-            icon={<EmailIcon fontSize="small" sx={{ color: "var(--color-text-secondary)" }} />}
+            icon={
+              <EmailIcon
+                fontSize="small"
+                sx={{ color: "var(--color-text-secondary)" }}
+              />
+            }
           />
         </Grid>
 
@@ -127,7 +149,12 @@ export default function IdentitySection({
             helper="Australian format (e.g., 04xx xxx xxx)"
             autoComplete="tel"
             inputMode="tel"
-            icon={<PhoneIcon fontSize="small" sx={{ color: "var(--color-text-secondary)" }} />}
+            icon={
+              <PhoneIcon
+                fontSize="small"
+                sx={{ color: "var(--color-text-secondary)" }}
+              />
+            }
           />
         </Grid>
       </Grid>

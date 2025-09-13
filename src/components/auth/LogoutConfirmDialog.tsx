@@ -12,6 +12,9 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useDispatch } from "react-redux";
 import { logoutSuccess } from "../../redux/features/authSlice";
+import { toast } from "react-toastify";
+import { useLogoutMutation } from "../../redux/features/authApi";
+import { useNavigate } from "react-router-dom";
 
 type LogoutConfirmDialogProps = {
   open: boolean;
@@ -23,10 +26,25 @@ export default function LogoutConfirmDialog({
   onClose,
 }: LogoutConfirmDialogProps) {
   const dispatch = useDispatch();
+  const [logout, { isLoading }] = useLogoutMutation();
+  const navigate = useNavigate()
 
-  const handleConfirm = () => {
-    dispatch(logoutSuccess());
-    onClose();
+  const handleConfirm = async () => {
+    try {
+      await logout({}).unwrap(); // call backend logout
+      // toast.success("You have been logged out successfully");
+      // navigate("/auth/sign-in")
+      window.location.href = "/auth/sign-in";
+    } catch (err: any) {
+      const message = err?.data?.message || "Failed to log out";
+      toast.error(message);
+      console.error("Logout API failed", err);
+    } finally {
+      // Always clear Redux + localStorage
+      dispatch(logoutSuccess());
+      localStorage.removeItem("token");
+      onClose();
+    }
   };
 
   return (
@@ -66,10 +84,7 @@ export default function LogoutConfirmDialog({
           pb: 0,
         }}
       >
-        <WarningAmberRoundedIcon
-          color="error"
-          sx={{ fontSize: 48, mb: 1 }}
-        />
+        <WarningAmberRoundedIcon color="error" sx={{ fontSize: 48, mb: 1 }} />
         <Typography variant="h6" fontWeight={700}>
           Confirm Logout
         </Typography>
@@ -77,7 +92,8 @@ export default function LogoutConfirmDialog({
 
       <DialogContent sx={{ textAlign: "center", mt: 1 }}>
         <Typography variant="body2" color="text.secondary">
-          Are you sure you want to log out? You’ll need to log in again to access your dashboard.
+          Are you sure you want to log out? You’ll need to log in again to
+          access your dashboard.
         </Typography>
       </DialogContent>
 
@@ -96,6 +112,7 @@ export default function LogoutConfirmDialog({
         </Button>
         <Button
           onClick={handleConfirm}
+          disabled={isLoading}
           variant="contained"
           color="error"
           sx={{
@@ -107,7 +124,7 @@ export default function LogoutConfirmDialog({
             "&:hover": { boxShadow: "0 4px 10px rgba(0,0,0,0.25)" },
           }}
         >
-          Logout
+          {isLoading ? "Logging out..." : "Logout"}
         </Button>
       </DialogActions>
     </Dialog>

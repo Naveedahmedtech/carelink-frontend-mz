@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SLICES_PATH } from "../../constant/REDUCER_PATH";
 
 // Define user roles
-export type Role = "participant" | "admin" | "trainer";
+export type Role = "PARTICIPANT" | "TRAINER" | "ADMIN";
 
 // Define what userData looks like
 interface UserData {
@@ -21,7 +21,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   isLoggedIn: false,
-  userData: { isLoggedIn: false, role: "participant" }, // default role = participant
+  userData: { isLoggedIn: false, role: "PARTICIPANT" }, // default role = PARTICIPANT
 };
 
 const authSlice = createSlice({
@@ -34,7 +34,7 @@ const authSlice = createSlice({
     },
     logoutSuccess(state) {
       state.isLoggedIn = false;
-      state.userData = { isLoggedIn: false, role: "participant" };
+      state.userData = { isLoggedIn: false, role: "PARTICIPANT" };
     },
     updateUserData(state, action: PayloadAction<Partial<UserData>>) {
       state.userData = { ...state.userData, ...action.payload };

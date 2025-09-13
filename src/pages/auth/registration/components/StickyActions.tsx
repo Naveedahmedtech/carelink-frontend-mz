@@ -34,7 +34,7 @@ export default function StickyActions({
 
         <div className="flex w-full sm:w-auto gap-2">
           {/* Back Button */}
-          <button
+          {/* <button
             type="button"
             aria-label="Go back"
             onClick={onBack ?? (() => navigate(-1))}
@@ -47,7 +47,7 @@ export default function StickyActions({
             "
           >
             Back
-          </button>
+          </button> */}
 
           {/* Continue Button */}
           <button

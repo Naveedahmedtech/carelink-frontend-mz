@@ -15,6 +15,7 @@ import { ThemeProvider as AppThemeProvider } from './context/ThemeContext';
 // 🔹 bring MUI ThemeProvider (has the `theme` prop)
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { theme } from './theme';
+import AuthLoader from './router/components/AuthLoader';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -23,7 +24,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <MuiThemeProvider theme={theme}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <NetworkStatus>
-              <App />
+              <AuthLoader>
+                <App />
+              </AuthLoader>
             </NetworkStatus>
           </LocalizationProvider>
         </MuiThemeProvider>

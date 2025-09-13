@@ -1,20 +1,38 @@
 // src/pages/trainers/onboarding/TrainerOnboardingWizard.tsx
 import * as React from "react";
-import { Container, Stack, Stepper, Step, StepLabel, Button, Box, Alert } from "@mui/material";
+import {
+  Container,
+  Stack,
+  Stepper,
+  Step,
+  StepLabel,
+  Box,
+  Alert,
+} from "@mui/material";
 import TrainerIdentitySection from "./sections/TrainerIdentitySection";
 import AvailabilityTravelSection from "./sections/AvailabilityTravelSection";
 import SpecialisationsSection from "./sections/SpecialisationsSection";
 import DocumentsSection from "./sections/DocumentsSection";
 import { TRAINER_STEPS, COMPULSORY_DOCS } from "./shared/constants";
-import { TrainerRegistrationErrors, TrainerRegistrationValues } from "./shared/types";
+import {
+  TrainerRegistrationErrors,
+  TrainerRegistrationValues,
+} from "./shared/types";
 import WizardLayout from "../../../../../components/wizard/WizardLayout";
 import ProgressHeader from "../../components/ProgressHeader";
 import StickyActions from "../../components/StickyActions";
 import { useNavigate } from "react-router-dom";
+import TrainingModulesSection from "./sections/TrainingModulesSection";
+import { useUpsertTrainerMutation } from "../../../../../redux/features/trainerApi";
+import { useAppDispatch, useAppSelector } from "../../../../../hooks";
+import { setTrainerProfile } from "../../../../../redux/features/trainerSlice";
 
 export default function TrainerOnboardingWizard() {
-  // You can wire these to Redux (registrationSlice) if preferred
+  const dispatch = useAppDispatch();
+  const trainerProfile = useAppSelector((state) => state.trainer);
+
   const [activeStep, setActiveStep] = React.useState(0);
+  const [hydrated, setHydrated] = React.useState(false); // avoid infinite loop
   const [values, setValues] = React.useState<TrainerRegistrationValues>({
     fullName: "",
     email: "",
@@ -27,29 +45,62 @@ export default function TrainerOnboardingWizard() {
   });
   const [errors, setErrors] = React.useState<TrainerRegistrationErrors>({});
   const [triedSubmit, setTriedSubmit] = React.useState(false);
-    const navigate = useNavigate();
+
+  const navigate = useNavigate();
+  const [upsertTrainer, { isLoading: saving }] = useUpsertTrainerMutation();
+
+  // hydrate once from Redux/localStorage
+  React.useEffect(() => {
+    if (!hydrated && trainerProfile?.onboardingStep !== undefined) {
+      setActiveStep(trainerProfile.onboardingStep || 0);
+      console.log("trainerProfile", trainerProfile)
+      setValues((prev) => ({
+        ...prev,
+        fullName: trainerProfile.fullName || "",
+        userId: trainerProfile.userId || "",
+        email: trainerProfile.email || "",
+        phone: trainerProfile.phone || "",
+        address: trainerProfile.address || "",
+        availability: trainerProfile.availability || {},
+        travelAreas: trainerProfile.travelAreas || [],
+        specialisations: trainerProfile.specialisations || [],
+        documents: trainerProfile.documents || {},
+      }));
+      setHydrated(true);
+    }
+  }, [trainerProfile, hydrated]);
+
   const NEXT_URL = "/auth/participant/book-interview";
 
-  const setValue = <K extends keyof TrainerRegistrationValues>(k: K, v: TrainerRegistrationValues[K]) =>
-    setValues((s) => ({ ...s, [k]: v }));
+  const setValue = <K extends keyof TrainerRegistrationValues>(
+    k: K,
+    v: TrainerRegistrationValues[K]
+  ) => setValues((s) => ({ ...s, [k]: v }));
 
-  // basic validation per step (extend as needed)
+  // validation
   React.useEffect(() => {
     const e: TrainerRegistrationErrors = {};
     if (activeStep === 0) {
       if (!values.fullName) e.fullName = "Required";
-      if (!values.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) e.email = "Valid email required";
-      if (!values.phone || !/^0\d{9}$/.test(values.phone.replace(/\s/g, ""))) e.phone = "Valid AU mobile required";
+      if (!values.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
+        e.email = "Valid email required";
+      if (!values.phone || !/^0\d{9}$/.test(values.phone.replace(/\s/g, "")))
+        e.phone = "Valid AU mobile required";
     }
     if (activeStep === 1) {
-      if (!Object.values(values.availability).some((slots) => slots.length)) e.availability = "Add at least one slot";
-      if (!values.travelAreas.length) e.travelAreas = "Select at least one area";
+      if (!Object.values(values.availability).some((slots) => slots.length))
+        e.availability = "Add at least one slot";
+      if (!values.travelAreas.length)
+        e.travelAreas = "Select at least one area";
     }
     if (activeStep === 2) {
-      if (!values.specialisations.length) e.specialisations = "Pick at least one";
+      if (!values.specialisations.length)
+        e.specialisations = "Pick at least one";
     }
     if (activeStep === 3) {
-      const missing = COMPULSORY_DOCS.filter((d) => !values.documents[d]?.file);
+      const missing = COMPULSORY_DOCS.filter(
+        (d) => !values.documents[d]?.file
+      );
       if (missing.length) e.documents = `Missing: ${missing.join(", ")}`;
     }
     setErrors(e);
@@ -57,21 +108,41 @@ export default function TrainerOnboardingWizard() {
 
   const canContinue = Object.keys(errors).length === 0;
 
-  const onNext = () => {
+  const onNext = async () => {
     setTriedSubmit(true);
-    // if (!canContinue) return;
+    if (!canContinue) return;
 
     if (activeStep < TRAINER_STEPS.length - 1) {
-      setActiveStep((s) => s + 1);
+      const nextStep = activeStep + 1;
+
+      const result = await upsertTrainer({
+        trainerId: trainerProfile?.trainerId || null,
+        step: nextStep,
+        ...values,
+      }).unwrap();
+
+      if (result?.data) {
+        dispatch(
+          setTrainerProfile({
+            userId: result.data.user._id,
+            trainerId: result.data.trainer._id,
+            email: result.data.user.email,
+            fullName: result.data.trainer.fullName,
+            onboardingStep: result.data.trainer.onboardingStep,
+          })
+        );
+      }
+
+      setActiveStep(nextStep);
     } else {
-      // Last step -> go to training page
       navigate(NEXT_URL, { replace: true, state: { from: "onboarding" } });
     }
   };
 
   const onBack = () => setActiveStep((s) => Math.max(0, s - 1));
 
-  const progress = ((activeStep + (canContinue ? 1 : 0)) / TRAINER_STEPS.length) * 100;
+  const progress =
+    ((activeStep + (canContinue ? 1 : 0)) / TRAINER_STEPS.length) * 100;
 
   return (
     <WizardLayout steps={TRAINER_STEPS} activeStep={activeStep + 1}>
@@ -81,7 +152,6 @@ export default function TrainerOnboardingWizard() {
             step={activeStep + 1}
             totalSteps={TRAINER_STEPS.length}
             title={TRAINER_STEPS[activeStep].title}
-            // subtitle={TRAINER_STEPS[activeStep].subtitle}
             progress={progress}
             role="trainer"
           />
@@ -93,20 +163,41 @@ export default function TrainerOnboardingWizard() {
           )}
 
           {activeStep === 0 && (
-            <TrainerIdentitySection values={values} errors={errors} setValue={setValue} />
+            <TrainerIdentitySection
+              values={values}
+              errors={errors}
+              setValue={setValue}
+            />
           )}
           {activeStep === 1 && (
-            <AvailabilityTravelSection values={values} errors={errors} setValue={setValue} />
+            <AvailabilityTravelSection
+              values={values}
+              errors={errors}
+              setValue={setValue}
+            />
           )}
           {activeStep === 2 && (
-            <SpecialisationsSection values={values} errors={errors} setValue={setValue} />
+            <SpecialisationsSection
+              values={values}
+              errors={errors}
+              setValue={setValue}
+            />
           )}
           {activeStep === 3 && (
-            <DocumentsSection values={values} errors={errors} setValue={setValue} />
+            <DocumentsSection
+              values={values}
+              errors={errors}
+              setValue={setValue}
+            />
           )}
+          {activeStep === 4 && <TrainingModulesSection onComplete={onNext} />}
 
           <Box>
-            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 2, display: 'none' }}>
+            <Stepper
+              activeStep={activeStep}
+              alternativeLabel
+              sx={{ mb: 2, display: "none" }}
+            >
               {TRAINER_STEPS.map((s, i) => (
                 <Step key={s.key} completed={i < activeStep}>
                   <StepLabel>{s.short}</StepLabel>
@@ -116,7 +207,7 @@ export default function TrainerOnboardingWizard() {
             <StickyActions
               onBack={activeStep > 0 ? onBack : undefined}
               onContinue={onNext}
-            //   disabled={!canContinue}
+              disabled={saving}
             />
           </Box>
         </Stack>

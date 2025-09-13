@@ -13,16 +13,18 @@ import { useAppDispatch } from "../../hooks";
 import { setUser } from '../../redux/features/auth/authSlice';
 import CareLinkAppBar from '../../components/wizard/AppBar';
 import { loginSuccess } from '../../redux/features/authSlice';
+import { useLoginMutation } from '../../redux/features/authApi';
 
 export default function SignIn() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
   const emailInputId = React.useId();
   const passwordInputId = React.useId();
 
-  const [email, setEmail] = React.useState('trainer@carelink.com');
-  const [password, setPassword] = React.useState('example');
+  const [email, setEmail] = React.useState('jkjkj@gmail.com');
+  const [password, setPassword] = React.useState('Testing1');
   const [remember, setRemember] = React.useState(false);
   const [showPw, setShowPw] = React.useState(false);
   const [capsOn, setCapsOn] = React.useState(false);
@@ -58,21 +60,30 @@ export default function SignIn() {
 
     setIsSubmitting(true);
     try {
+      const result = await login({ email, password }).unwrap();
       await new Promise((r) => setTimeout(r, 500));
       dispatch(
         loginSuccess({
-          id: "mock1",
-          name: "CareLink User",
-          email,
-          role: email === "trainer@carelink.com" ? "trainer" : "participant", // change to "admin" or "trainer" or "participant" to test
-          token: "fake-jwt",
+          id: result?.data?.user._id,
+          email: result?.data?.user.email,
+          role: result?.data?.user.role, // change to "admin" or "trainer" or "participant" to test
           isLoggedIn: true,
         })
       );
-      navigate('/dashboard');
 
-    } catch {
-      setFormError("Sign-in failed. Please try again.");
+      console.log('result', result)
+
+      if (result?.data?.user.role === "PARTICIPANT") {
+        navigate('/dashboard');
+      } else if (result?.data?.user.role === "TRAINER") {
+        navigate("/dashboard/trainer")
+      } else {
+        navigate("/dashboard/admin")
+
+      }
+
+    } catch (e: any) {
+      setFormError(e?.data?.message || "Sign-in failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

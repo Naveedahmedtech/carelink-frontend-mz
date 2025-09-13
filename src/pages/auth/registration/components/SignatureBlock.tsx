@@ -22,11 +22,19 @@ export default function SignatureBlock({
   const snapshotToValue = React.useCallback(() => {
     const sig = sigRef.current;
     if (!sig) return;
-    const dataUrl = sig.isEmpty()
-      ? null
-      : sig.getTrimmedCanvas().toDataURL("image/png");
-    onChange({ ...value, dataUrl });
+
+const dataUrl = sig.isEmpty()
+  ? null
+  : sig.getCanvas().toDataURL("image/png");
+
+
+    onChange({
+      ...value,
+      dataUrl,
+      date: value.date || new Date().toISOString().split("T")[0], // auto-fill today's date
+    });
   }, [onChange, value]);
+
 
   const clear = React.useCallback(() => {
     sigRef.current?.clear();

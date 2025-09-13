@@ -10,10 +10,10 @@ export default function RoleBasedDashboard() {
 
   let menu;
   switch (role) {
-    case "admin":
+    case "ADMIN":
       menu = adminMenu;
       break;
-    case "trainer":
+    case "TRAINER":
       menu = trainerMenu;
       break;
     default:

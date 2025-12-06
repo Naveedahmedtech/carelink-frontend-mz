@@ -8,6 +8,7 @@ import { authApi } from './features/authApi';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'; 
 import { trainerApi } from './features/trainerApi';
 import { participantApi } from './features/participantApi';
+import { shiftApi } from './features/shiftApi';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   [authApi.reducerPath]: authApi.reducer,
   [trainerApi.reducerPath]: trainerApi.reducer,
   [participantApi.reducerPath]: participantApi.reducer,
+  [shiftApi.reducerPath]: shiftApi.reducer,
 });
 
 export const store = configureStore({
@@ -25,6 +27,7 @@ export const store = configureStore({
       .concat(authApi.middleware)
       .concat(trainerApi.middleware)
       .concat(participantApi.middleware)
+      .concat(shiftApi.middleware)
 });
 
 export type RootState = ReturnType<typeof store.getState>;

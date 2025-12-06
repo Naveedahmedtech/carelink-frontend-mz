@@ -19,7 +19,6 @@ import {
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { TRAINING_MODULES } from "../shared/trainingModules";
-import { useNavigate } from "react-router-dom";
 
 const STORAGE_KEY = "trainer-training-progress";
 
@@ -28,7 +27,6 @@ interface Props {
 }
 
 export default function TrainingModulesSection({ onComplete }: Props) {
-  // Initialize state from storage synchronously
   const getSavedProgress = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -50,38 +48,26 @@ export default function TrainingModulesSection({ onComplete }: Props) {
   >({});
   const [activeSlide, setActiveSlide] = useState(0);
 
-
   const theme = useTheme();
-
-  const navigate = useNavigate();
 
   // Load saved progress
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const { current, answers, completed, booking } = JSON.parse(saved);
+      const { current, answers, completed } = JSON.parse(saved);
       setCurrent(current);
       setAnswers(answers);
-      setCompleted(!!completed); // ensure boolean
-      if (completed && booking !== "pending") {
-        navigate("/auth/sign-in", { replace: true });
-      }
-      if (completed && booking === "pending") {
-        navigate("/auth/participant/book-interview", { replace: true });
-      }
+      setCompleted(!!completed);
     }
   }, []);
-
-
 
   // Save progress
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ current, answers, completed, booking: "pending" })
+      JSON.stringify({ current, answers, completed })
     );
   }, [current, answers, completed]);
-
 
   const module = TRAINING_MODULES[current];
 
@@ -116,7 +102,7 @@ export default function TrainingModulesSection({ onComplete }: Props) {
         STORAGE_KEY,
         JSON.stringify({ current, answers, completed: true })
       );
-      onComplete();
+      onComplete(); // ✅ wizard will push to Employment Agreement
     }
   };
 
@@ -150,17 +136,14 @@ export default function TrainingModulesSection({ onComplete }: Props) {
         }}
       >
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          {/* Section Title */}
           <Typography variant="h5" fontWeight={600} gutterBottom>
             {module.title}
           </Typography>
 
-          {/* Reading Material */}
           <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
             {module.content}
           </Typography>
 
-          {/* Video */}
           {module.videoUrl && (
             <Box sx={{ mb: 3 }}>
               <iframe
@@ -174,7 +157,6 @@ export default function TrainingModulesSection({ onComplete }: Props) {
             </Box>
           )}
 
-          {/* 🚀 Eco Slideshow */}
           {module.slides && module.slides.length > 0 && (
             <Box sx={{ mb: 4 }}>
               <Box
@@ -261,7 +243,6 @@ export default function TrainingModulesSection({ onComplete }: Props) {
 
           <Divider sx={{ my: 3 }} />
 
-          {/* Quiz */}
           {module.questions.map((q) => (
             <Box key={q.id} sx={{ mb: 3 }}>
               <Typography fontWeight={600} sx={{ mb: 1 }}>
@@ -300,7 +281,6 @@ export default function TrainingModulesSection({ onComplete }: Props) {
         </CardContent>
       </Card>
 
-      {/* Actions */}
       <Stack direction="row" justifyContent="flex-end">
         <Button
           variant="contained"

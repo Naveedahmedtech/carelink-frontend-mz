@@ -31,10 +31,23 @@ export const TRAINER_STEPS = [
     title: "Training & Assessment",
     subtitle: "Complete modules and quizzes",
   },
+  {
+    key: "agreement", // 🔹 new step
+    short: "Agreement",
+    title: "Employment Agreement",
+    subtitle: "Review and sign your employment agreement",
+  },
 ] as const;
 
-
-export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
+export const DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
 
 export const SPECIALISATIONS = [
   "Autism",

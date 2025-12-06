@@ -42,9 +42,9 @@ export default function Step3CreateLogin() {
 
   const onChange =
     (key: "password" | "confirmPassword") =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setValues((s) => ({ ...s, [key]: e.target.value }));
-    };
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setValues((s) => ({ ...s, [key]: e.target.value }));
+      };
 
   // validation
   React.useEffect(() => {
@@ -78,6 +78,8 @@ export default function Step3CreateLogin() {
       await setPassword({ email, password: values.password }).unwrap();
       toast.success("Password set successfully!");
       dispatch(nextStep());
+      localStorage.removeItem('participant-registration-step2')
+
       navigate("/auth/sign-in");
     } catch (err: any) {
       const message = err?.data?.message || "Failed to set password";

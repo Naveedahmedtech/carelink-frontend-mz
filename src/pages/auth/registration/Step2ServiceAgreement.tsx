@@ -112,8 +112,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     toast.success("Agreement saved!");
 
-    localStorage.removeItem('participant-registration-step1')
-    localStorage.removeItem('participant-registration-step2')
 
     dispatch(nextStep());
     navigate("/auth/register/participant/create-login");

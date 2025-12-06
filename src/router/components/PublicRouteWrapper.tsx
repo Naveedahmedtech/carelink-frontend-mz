@@ -17,6 +17,8 @@ const PublicRouteWrapper = () => {
         loginSuccess({
           id: data.data._id,
           email: data.data.email,
+          name: data.data?.name,
+
           role: data.data.role,
           isLoggedIn: true,
           token: localStorage.getItem("token") || undefined, // only if storing JWT in localStorage

@@ -142,23 +142,23 @@ export const mockShifts: Shift[] = [
 
 export const getStatusStyle = (status: ShiftStatus) => {
   switch (status) {
-    case "Approved":
-    case "Completed":
+    case "approved":
+    case "completed":
       return {
         bg: "linear-gradient(135deg, var(--color-success), #27ae60)",
         chip: "var(--color-success)",
       };
-    case "Pending":
+    case "pending":
       return {
         bg: "linear-gradient(135deg, var(--color-pending), #f39c12)",
         chip: "var(--color-pending)",
       };
-    case "In Progress":
+    case "in progress":
       return {
         bg: "linear-gradient(135deg, #2980b9, #3498db)", // Blue
         chip: "#2980b9",
       };
-    case "Cancelled":
+    case "cancelled":
       return {
         bg: "linear-gradient(135deg, var(--color-error), #c0392b)",
         chip: "var(--color-error)",

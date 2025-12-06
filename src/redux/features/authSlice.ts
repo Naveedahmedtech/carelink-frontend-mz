@@ -1,17 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SLICES_PATH } from "../../constant/REDUCER_PATH";
 
-// Define user roles
 export type Role = "PARTICIPANT" | "TRAINER" | "ADMIN";
 
-// Define what userData looks like
 interface UserData {
-  id?: string;
-  name?: string;
-  email?: string;
-  role: Role; // 👈 core field for role-based dashboard
-  token?: string;
-  isLoggedIn: boolean;
+  id: string;
+  name: string;    // ← not optional
+  email: string;   // ← not optional
+  role: Role;
+  token?: string;  // token can remain optional
+  isLoggedIn: boolean; // (you can keep this for now if you like)
 }
 
 interface AuthState {
@@ -21,7 +19,14 @@ interface AuthState {
 
 const initialState: AuthState = {
   isLoggedIn: false,
-  userData: { isLoggedIn: false, role: "PARTICIPANT" }, // default role = PARTICIPANT
+  userData: {
+    id: "",
+    name: "",              // ← default empty string
+    email: "",             // ← default empty string
+    role: "PARTICIPANT",
+    token: undefined,
+    isLoggedIn: false,
+  },
 };
 
 const authSlice = createSlice({
@@ -30,11 +35,12 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess(state, action: PayloadAction<UserData>) {
       state.isLoggedIn = true;
-      state.userData = { ...action.payload, isLoggedIn: true };
+      // ensure we never lose defaults if payload misses something
+      state.userData = { ...initialState.userData, ...action.payload, isLoggedIn: true };
     },
     logoutSuccess(state) {
       state.isLoggedIn = false;
-      state.userData = { isLoggedIn: false, role: "PARTICIPANT" };
+      state.userData = { ...initialState.userData }; // reset to safe defaults
     },
     updateUserData(state, action: PayloadAction<Partial<UserData>>) {
       state.userData = { ...state.userData, ...action.payload };
@@ -42,7 +48,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginSuccess, logoutSuccess, updateUserData } =
-  authSlice.actions;
-
+export const { loginSuccess, logoutSuccess, updateUserData } = authSlice.actions;
 export default authSlice.reducer;

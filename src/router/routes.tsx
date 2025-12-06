@@ -25,6 +25,11 @@ import TrainerReportsPage from '../pages/dashboard/trainer/shift-reports/index.t
 import TrainerProfile from '../pages/dashboard/trainer/profile/index.tsx';
 import ParticipantProfile from '../pages/dashboard/participant/profile/index.tsx';
 import TrainerListPage from '../pages/dashboard/admin/trainer/index.tsx';
+import CreateTrainerLogin from '../pages/auth/registration/trainer/CreateTrainerLogin.tsx';
+import ShiftRequestsPage from '../pages/dashboard/admin/shifts/index.tsx';
+import TimesheetAdminPage from '../pages/dashboard/admin/time-sheets/index.tsx';
+import AdminDashboard from '../pages/dashboard/admin/dashboard/index.tsx';
+import ParticipantListPage from '../pages/dashboard/admin/participants/index.tsx';
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -38,6 +43,7 @@ export const router = createBrowserRouter(
         <Route path={'/auth/register/participant'} element={<Step2ParticipantAccount />} />
         <Route path={'/auth/register/participant/agreement'} element={<Step2ServiceAgreement />} />
         <Route path={'/auth/register/participant/create-login'} element={<Step3CreateLogin />} />
+        <Route path={'/auth/register/trainer/create-login'} element={<CreateTrainerLogin />} />
         <Route path={APP_ROUTES.AUTH.REGISTER_TRAINER} element={<TrainerRegistration />} />
           <Route path="/auth/participant/book-interview" element={<OwnerInterviewBookingPage />} />
 
@@ -61,10 +67,12 @@ export const router = createBrowserRouter(
           <Route path="profile/participant" element={<ParticipantProfile />} />
 
           {/* admin pages */}
-          <Route path="admin" element={<div>ADMIN</div>} />
-          <Route path="participants" element={<div>Participants</div>} />
+          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="participants" element={<ParticipantListPage />} />
           <Route path="trainers" element={<TrainerListPage />} />
           <Route path="calendar" element={<div>Calendar</div>} />
+          <Route path="/dashboard/shift-requests" element={<ShiftRequestsPage />} />
+          <Route path="/dashboard/time-sheet" element={<TimesheetAdminPage />} />
 
           {/* trainer pages */}
           <Route path="trainer" element={<TrainerDashboardPage />} />

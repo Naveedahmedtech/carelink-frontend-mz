@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -7,63 +7,264 @@ import {
   Chip,
   Divider,
   TextField,
-  MenuItem,
   InputAdornment,
+  CircularProgress,
+  Button,
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import TimelapseIcon from "@mui/icons-material/Timelapse";
 import NotesIcon from "@mui/icons-material/Notes";
 import SearchIcon from "@mui/icons-material/Search";
-import { isBefore, parseISO, isSameMonth, format } from "date-fns";
-import { mockShifts, getStatusStyle, Shift } from "../../utils";
+import { isBefore, parseISO, format } from "date-fns";
+import { getStatusStyle, Shift as UiShift } from "../../utils";
+import { useGetPastShiftsQuery } from "../../redux/features/shiftApi";
 
-// unique workers list
-const workers = Array.from(new Set(mockShifts.map((s) => s.worker))).filter(Boolean);
+/** ==== API row type – matches your payload ==== */
+type TimesheetRow = {
+  _id: string;
+  shiftRequestId: string;
+  participantId: string;
+  trainerId: string;
+  service: string;
+  scheduledStart: string; // ISO
+  scheduledEnd: string;   // ISO
+  scheduledDurationMinutes: number;
+  actualClockIn?: string | null;
+  plannedClockOut?: string | null;
+  actualClockOut?: string | null;
+  status: "COMPLETED" | "IN_PROGRESS" | "CANCELLED" | "REJECTED" | "APPROVED" | "PENDING";
+  report?: {
+    activities?: string;
+    progress?: string;
+    incidents?: string;
+    km?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+  endDate?: string;
+  trainer?: {
+    _id: string;
+    userId: string;
+    fullName: string;
+    userEmail?: string;
+  };
+};
 
-// all statuses
-const statuses: Shift["status"][] = [
-  "Pending",
-  "Approved",
-  "In Progress",
-  "Completed",
-  "Cancelled",
-];
+/** ==== UI shape (extended to carry structured notes) ==== */
+type Shift = UiShift & {
+  supportNotes?: {
+    activities?: string;
+    progress?: string;
+    incidents?: string;
+    km?: number;
+  };
+  worker?: string;
+};
+
+/** ==== helpers ==== */
+const SERVICE_LABELS: Record<string, string> = {
+  personalCare: "Personal Care",
+  community: "Community Support",
+  fitness: "Fitness",
+  cooking: "Cooking",
+};
+
+const toServiceLabel = (code?: string) =>
+  SERVICE_LABELS[code ?? ""] ?? (code ? code[0].toUpperCase() + code.slice(1) : "Shift");
+
+function toTimeRange(start?: string, end?: string) {
+  if (!start || !end) return "—";
+  return `${format(parseISO(start), "HH:mm")} – ${format(parseISO(end), "HH:mm")}`;
+}
+
+function toDurationLabel(mins?: number | null) {
+  if (!mins && mins !== 0) return "—";
+  const m = Math.max(0, mins);
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (h && r) return `${h}h ${r}m`;
+  if (h) return `${h}h`;
+  return `${r}m`;
+}
+
+function normalizeStatus(s: TimesheetRow["status"]): UiShift["status"] {
+  switch (s) {
+    case "COMPLETED":
+      return "Completed";
+    case "IN_PROGRESS":
+      return "In Progress";
+    case "CANCELLED":
+    case "REJECTED":
+      return "Cancelled";
+    case "APPROVED":
+      return "Approved";
+    case "PENDING":
+    default:
+      return "Pending";
+  }
+}
+
+/** Map API row → card shape (keeping structured notes) */
+function mapRow(row: TimesheetRow): Shift {
+  const cardDate = row.endDate || row.scheduledEnd || row.scheduledStart;
+
+  return {
+    id: row._id,
+    title: toServiceLabel(row.service),
+    date: cardDate!,
+    time: toTimeRange(row.scheduledStart, row.scheduledEnd),
+    duration: toDurationLabel(row.scheduledDurationMinutes),
+    status: normalizeStatus(row.status),
+    worker: row.trainer?.fullName || row.trainerId,
+    notes: undefined, // we’ll render structured notes instead when available
+    supportNotes: row.report
+      ? {
+          activities: row.report.activities,
+          progress: row.report.progress,
+          incidents: row.report.incidents,
+          km: row.report.km,
+        }
+      : undefined,
+  };
+}
+
+/** Compact support-notes block, respecting your design */
+function SupportNotes({ notes }: { notes?: Shift["supportNotes"] }) {
+  if (!notes) return null;
+
+  const { activities, progress, incidents, km } = notes;
+  const show =
+    (activities && activities.trim()) ||
+    (progress && progress.trim()) ||
+    (incidents && incidents.trim()) ||
+    typeof km === "number";
+
+  if (!show) return null;
+
+  return (
+    <Box
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: "1px solid var(--color-border)",
+        bgcolor: "var(--color-background-shade-2)",
+        display: "flex",
+        gap: 1.5,
+      }}
+    >
+      <NotesIcon color="primary" fontSize="small" />
+      <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.25 }}>
+          Support Notes
+        </Typography>
+
+        {activities && activities.trim() && (
+          <Stack direction="row" spacing={1} sx={{ minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "var(--color-text-muted)", minWidth: 84 }}>
+              Activities
+            </Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>
+              {activities}
+            </Typography>
+          </Stack>
+        )}
+
+        {progress && progress.trim() && (
+          <Stack direction="row" spacing={1} sx={{ minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "var(--color-text-muted)", minWidth: 84 }}>
+              Progress
+            </Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>
+              {progress}
+            </Typography>
+          </Stack>
+        )}
+
+        {incidents && incidents.trim() && (
+          <Stack direction="row" spacing={1} sx={{ minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "var(--color-text-muted)", minWidth: 84 }}>
+              Incidents
+            </Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>
+              {incidents}
+            </Typography>
+          </Stack>
+        )}
+
+        {typeof km === "number" && (
+          <Stack direction="row" spacing={1}>
+            <Typography variant="caption" sx={{ color: "var(--color-text-muted)", minWidth: 84 }}>
+              KM
+            </Typography>
+            <Typography variant="body2">{km}</Typography>
+          </Stack>
+        )}
+      </Stack>
+    </Box>
+  );
+}
 
 export default function PreviousShiftsPage() {
   const today = new Date();
-
-  const [workerFilter, setWorkerFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [monthFilter, setMonthFilter] = useState<number | null>(null);
   const [search, setSearch] = useState("");
 
-  // only previous shifts
-  const previousShifts = mockShifts.filter((s) => isBefore(parseISO(s.date), today));
-
-  const filteredShifts = previousShifts.filter((s) => {
-    if (workerFilter && s.worker !== workerFilter) return false;
-    if (statusFilter && s.status !== statusFilter) return false;
-    if (monthFilter !== null && !isSameMonth(parseISO(s.date), new Date(2025, monthFilter)))
-      return false;
-    if (search && !(`${s.title} ${s.notes || ""}`.toLowerCase().includes(search.toLowerCase())))
-      return false;
-    return true;
+  const { data, isFetching, isError, refetch } = useGetPastShiftsQuery({
+    page: 1,
+    pageSize: 100,
   });
+
+  // path: data.data.data (your previous shape)
+  const apiRows: TimesheetRow[] = (data as any)?.data?.data ?? [];
+
+  const mappedShifts: Shift[] = useMemo(() => apiRows.map(mapRow), [apiRows]);
+
+  // Past-only filter
+  const previousShifts = useMemo(
+    () =>
+      mappedShifts.filter((s) => {
+        try {
+          return isBefore(parseISO(s.date), today);
+        } catch {
+          return false;
+        }
+      }),
+    [mappedShifts, today]
+  );
+
+  // Search over title, worker, and all support note fields
+  const filteredShifts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return previousShifts;
+    return previousShifts.filter((s) => {
+      const haystack = [
+        s.title,
+        s.worker,
+        s.supportNotes?.activities,
+        s.supportNotes?.progress,
+        s.supportNotes?.incidents,
+        typeof s.supportNotes?.km === "number" ? String(s.supportNotes?.km) : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [previousShifts, search]);
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
       <Stack spacing={0.5}>
         <Typography variant="h5" fontWeight={700} color="var(--color-text)">
-          Previous Shifts
+          Previous Requests
         </Typography>
         <Typography variant="body2" color="var(--color-text-muted)">
-          Review your past shifts. Use filters to narrow results.
+          Review your past requests. Use search to find what you need.
         </Typography>
       </Stack>
 
-      {/* Filters Row */}
+      {/* Search only */}
       <Paper
         sx={{
           p: 2,
@@ -72,70 +273,11 @@ export default function PreviousShiftsPage() {
           bgcolor: "var(--color-background-shade-1)",
           display: "grid",
           gap: 2,
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(4, 1fr)",
-          },
+          gridTemplateColumns: { xs: "1fr", sm: "1fr", md: "1fr" },
         }}
       >
-        {/* Worker filter */}
         <TextField
-          select
-          label="Worker"
-          value={workerFilter}
-          onChange={(e) => setWorkerFilter(e.target.value)}
-          size="small"
-          fullWidth
-        >
-          <MenuItem value="">All</MenuItem>
-          {workers.map((w) => (
-            <MenuItem key={w} value={w}>
-              {w}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {/* Status filter */}
-        <TextField
-          select
-          label="Status"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          size="small"
-          fullWidth
-        >
-          <MenuItem value="">All</MenuItem>
-          {statuses.map((s) => (
-            <MenuItem key={s} value={s}>
-              {s}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {/* Month filter */}
-        <TextField
-          select
-          label="Month"
-          value={monthFilter ?? ""}
-          onChange={(e) =>
-            setMonthFilter(e.target.value === "" ? null : Number(e.target.value))
-          }
-          size="small"
-          fullWidth
-        >
-          <MenuItem value="">All</MenuItem>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <MenuItem key={i} value={i}>
-              {new Date(2025, i).toLocaleString("default", { month: "long" })}
-            </MenuItem>
-          ))}
-        </TextField>
-
-
-        {/* Search */}
-        <TextField
-          placeholder="Search shifts..."
+          placeholder="Search requests..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
@@ -150,8 +292,44 @@ export default function PreviousShiftsPage() {
         />
       </Paper>
 
-      {/* Empty State */}
-      {filteredShifts.length === 0 && (
+      {/* Loading / Error / Empty */}
+      {isFetching && (
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 3,
+            border: "1px dashed var(--color-border)",
+            bgcolor: "var(--color-background-shade-1)",
+          }}
+        >
+          <CircularProgress size={20} sx={{ mr: 1 }} />
+          <Typography variant="body2" component="span" color="var(--color-text-muted)">
+            Loading…
+          </Typography>
+        </Paper>
+      )}
+
+      {isError && !isFetching && (
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 3,
+            border: "1px dashed var(--color-border)",
+            bgcolor: "var(--color-background-shade-1)",
+          }}
+        >
+          <Typography variant="body2" color="error">
+            Failed to load requests.
+          </Typography>
+          <Button variant="outlined" size="small" sx={{ mt: 1 }} onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Paper>
+      )}
+
+      {!isFetching && !isError && filteredShifts.length === 0 && (
         <Paper
           sx={{
             p: 4,
@@ -162,12 +340,12 @@ export default function PreviousShiftsPage() {
           }}
         >
           <Typography variant="body1" color="var(--color-text-muted)">
-            No previous shifts match your filters.
+            No previous requests match your search.
           </Typography>
         </Paper>
       )}
 
-      {/* Shifts Grid */}
+      {/* Cards */}
       <Box
         sx={{
           display: "grid",
@@ -177,7 +355,6 @@ export default function PreviousShiftsPage() {
       >
         {filteredShifts.map((shift) => {
           const statusStyle = getStatusStyle(shift.status);
-
           return (
             <Paper
               key={shift.id}
@@ -224,21 +401,16 @@ export default function PreviousShiftsPage() {
                 {shift.worker && (
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <PersonIcon fontSize="small" sx={{ color: "var(--color-primary)" }} />
-                    <Typography variant="body2">Worker: {shift.worker}</Typography>
+                    <Typography variant="body2">Trainer: {shift.worker}</Typography>
                   </Stack>
                 )}
 
-                {shift.notes && (
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <NotesIcon fontSize="small" sx={{ color: "var(--color-primary)" }} />
-                    <Typography variant="body2">{shift.notes}</Typography>
-                  </Stack>
-                )}
+                {/* Support Notes (structured, clean) */}
+                <SupportNotes notes={shift.supportNotes} />
               </Stack>
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Status chip */}
               <Chip
                 label={shift.status}
                 size="small"

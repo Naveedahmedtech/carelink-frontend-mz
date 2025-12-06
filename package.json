@@ -34,6 +34,8 @@
     "react-toastify": "^10.0.5",
     "react-use": "^17.5.0",
     "react-verification-input": "^4.1.2",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^2.2.2",
     "socket.io-client": "^4.8.1",
     "swiper": "^11.2.10",
     "yup": "^1.4.0"

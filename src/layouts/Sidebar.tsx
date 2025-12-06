@@ -20,6 +20,8 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import LogoutConfirmDialog from "../components/auth/LogoutConfirmDialog";
+import { useAppSelector } from "../redux/store";
+import { useGetMeQuery } from "../redux/features/authApi";
 
 type MenuItemType = {
   label: string;
@@ -36,6 +38,10 @@ type SidebarProps = {
 export default function Sidebar({ menu, onNavigate, collapsed }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { userData } = useAppSelector((state: any) => state.auth);
+  const { data, isFetching, refetch } = useGetMeQuery(undefined);
+  const me = (data as any)?.data ?? (data as any) ?? {};
+  const user = me;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -150,14 +156,14 @@ export default function Sidebar({ menu, onNavigate, collapsed }: SidebarProps) {
           cursor: "pointer",
         }}
       >
-        <Avatar sx={{ bgcolor: "var(--color-primary)" }}>A</Avatar>
+        <Avatar sx={{ bgcolor: "var(--color-primary)" }}>            {user?.name?.[0]}</Avatar>
         {!collapsed && (
           <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={600}>
-              Alex Johnson
+              {user?.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Participant
+              {user?.role}
             </Typography>
           </Box>
         )}
@@ -185,10 +191,10 @@ export default function Sidebar({ menu, onNavigate, collapsed }: SidebarProps) {
         {/* Profile Header */}
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="body1" fontWeight={600}>
-            Alex Johnson
+            {user?.name}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Participant
+            {user?.role}
           </Typography>
         </Box>
         <Divider sx={{ my: 1 }} />

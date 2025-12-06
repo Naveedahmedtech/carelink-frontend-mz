@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { BASE_URL } from "../../constant/BASE_URL";
 import { REDUCER_PATHS } from "../../constant/REDUCER_PATH";
+import { AnyCnameRecord } from "node:dns";
 
 export const participantApi = createApi({
   reducerPath: REDUCER_PATHS.PARTICIPANT_API,
@@ -15,7 +16,7 @@ export const participantApi = createApi({
       query: (body: any) => ({
         url: "/participant/onboarding",
         method: "POST",
-        body, 
+        body,
       }),
       invalidatesTags: ["Participant"],
     }),
@@ -25,8 +26,21 @@ export const participantApi = createApi({
       query: () => "/participants/me",
       providesTags: ["Participant"],
     }),
+
+    getParticipants: builder.query<any, any | void>({
+      query: (params) => ({
+        url: "/participant",
+        params: {
+          page: params?.page ?? 1,
+          limit: params?.limit ?? 10,
+          q: params?.q,
+          email: params?.email,
+          status: params?.status,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useUpsertParticipantMutation, useGetParticipantProfileQuery } =
+export const { useUpsertParticipantMutation, useGetParticipantProfileQuery, useGetParticipantsQuery } =
   participantApi;

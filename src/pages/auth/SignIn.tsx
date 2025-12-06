@@ -68,6 +68,7 @@ export default function SignIn() {
           email: result?.data?.user.email,
           role: result?.data?.user.role, // change to "admin" or "trainer" or "participant" to test
           isLoggedIn: true,
+          name: result?.data?.user.email
         })
       );
 

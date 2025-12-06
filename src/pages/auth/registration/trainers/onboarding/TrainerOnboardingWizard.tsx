@@ -26,6 +26,7 @@ import TrainingModulesSection from "./sections/TrainingModulesSection";
 import { useUpsertTrainerMutation } from "../../../../../redux/features/trainerApi";
 import { useAppDispatch, useAppSelector } from "../../../../../hooks";
 import { setTrainerProfile } from "../../../../../redux/features/trainerSlice";
+import TrainerEmploymentAgreement from "./sections/TrainerEmploymentAgreement";
 
 export default function TrainerOnboardingWizard() {
   const dispatch = useAppDispatch();
@@ -42,6 +43,12 @@ export default function TrainerOnboardingWizard() {
     travelAreas: [],
     specialisations: [],
     documents: {},
+    agreement: {  // 🔹 ensure initialized
+      tos: false,
+      privacy: false,
+      consent: false,
+      signature: { dataUrl: null, date: "" },
+    },
   });
   const [errors, setErrors] = React.useState<TrainerRegistrationErrors>({});
   const [triedSubmit, setTriedSubmit] = React.useState(false);
@@ -51,13 +58,12 @@ export default function TrainerOnboardingWizard() {
 
   // hydrate once from Redux/localStorage
   React.useEffect(() => {
+    console.log("trainerProfile", trainerProfile)
     if (!hydrated && trainerProfile?.onboardingStep !== undefined) {
       setActiveStep(trainerProfile.onboardingStep || 0);
-      console.log("trainerProfile", trainerProfile)
       setValues((prev) => ({
         ...prev,
         fullName: trainerProfile.fullName || "",
-        userId: trainerProfile.userId || "",
         email: trainerProfile.email || "",
         phone: trainerProfile.phone || "",
         address: trainerProfile.address || "",
@@ -103,41 +109,132 @@ export default function TrainerOnboardingWizard() {
       );
       if (missing.length) e.documents = `Missing: ${missing.join(", ")}`;
     }
+    if (activeStep === 5) { // 🔹 validate agreement step
+      if (
+        !values.agreement?.tos ||
+        !values.agreement?.privacy ||
+        !values.agreement?.consent
+      ) {
+        e.agreement = "You must agree to all conditions.";
+      }
+      if (!values.agreement?.signature?.dataUrl) {
+        e.agreement = "Signature is required.";
+      }
+    }
     setErrors(e);
   }, [activeStep, values]);
 
   const canContinue = Object.keys(errors).length === 0;
 
+  // const onNext = async () => {
+  //   setTriedSubmit(true);
+  //   if (activeStep === 4) {
+  //     setActiveStep(5);
+  //     return;
+  //   }
+  //   if (!canContinue) return;
+
+  //   if (activeStep < TRAINER_STEPS.length - 1) {
+  //     const nextStep = activeStep + 1;
+  //     console.log("Submitting step", trainerProfile, values);
+  //     const result = await upsertTrainer({
+  //       trainerId: trainerProfile?.trainerId || null,
+  //       userId: trainerProfile?.userId || null,
+  //       step: nextStep,
+  //       ...values,
+  //     }).unwrap();
+
+
+  //     if (result?.data) {
+  //       dispatch(
+  //         setTrainerProfile({
+  //           userId: result.data.user._id,
+  //           trainerId: result.data.trainer._id,
+  //           email: result.data.user.email,
+  //           fullName: result.data.trainer.fullName,
+  //           onboardingStep: result.data.trainer.onboardingStep,
+  //         })
+  //       );
+  //     }
+
+  //     setActiveStep(nextStep);
+  //   } else {
+  //     navigate(NEXT_URL, { replace: true, state: { from: "onboarding" } });
+  //   }
+  // };
+
+
+
   const onNext = async () => {
-    setTriedSubmit(true);
+  setTriedSubmit(true);
+
+  // 🔹 Step 4 (Training): just advance, no API
+  if (activeStep === 4) {
+    setActiveStep(5);
+    return;
+  }
+
+  // 🔹 Step 5 (Agreement): validate + save to API + go to interview
+  if (activeStep === 5) {
     if (!canContinue) return;
 
-    if (activeStep < TRAINER_STEPS.length - 1) {
-      const nextStep = activeStep + 1;
+    const result = await upsertTrainer({
+      trainerId: trainerProfile?.trainerId || null,
+      userId: trainerProfile?.userId || null,
+      step: 5,
+      ...values, // includes agreement
+    }).unwrap();
 
-      const result = await upsertTrainer({
-        trainerId: trainerProfile?.trainerId || null,
-        step: nextStep,
-        ...values,
-      }).unwrap();
-
-      if (result?.data) {
-        dispatch(
-          setTrainerProfile({
-            userId: result.data.user._id,
-            trainerId: result.data.trainer._id,
-            email: result.data.user.email,
-            fullName: result.data.trainer.fullName,
-            onboardingStep: result.data.trainer.onboardingStep,
-          })
-        );
-      }
-
-      setActiveStep(nextStep);
-    } else {
-      navigate(NEXT_URL, { replace: true, state: { from: "onboarding" } });
+    if (result?.data) {
+      dispatch(
+        setTrainerProfile({
+          userId: result.data.user._id,
+          trainerId: result.data.trainer._id,
+          email: result.data.user.email,
+          fullName: result.data.trainer.fullName,
+          onboardingStep: result.data.trainer.onboardingStep,
+          agreement: result.data.trainer.agreement,
+        })
+      );
     }
-  };
+
+    // ✅ now go to interview booking
+    navigate(NEXT_URL, {
+      replace: true,
+      state: { from: "onboarding" },
+    });
+    return;
+  }
+
+  // 🔹 Steps 0–3: normal flow (validate + API + advance)
+  if (!canContinue) return;
+
+  if (activeStep < TRAINER_STEPS.length - 1) {
+    const nextStep = activeStep + 1;
+    const result = await upsertTrainer({
+      trainerId: trainerProfile?.trainerId || null,
+      userId: trainerProfile?.userId || null,
+      step: nextStep,
+      ...values,
+    }).unwrap();
+
+    if (result?.data) {
+      dispatch(
+        setTrainerProfile({
+          userId: result.data.user._id,
+          trainerId: result.data.trainer._id,
+          email: result.data.user.email,
+          fullName: result.data.trainer.fullName,
+          onboardingStep: result.data.trainer.onboardingStep,
+        })
+      );
+    }
+
+    setActiveStep(nextStep);
+  }
+};
+
+
 
   const onBack = () => setActiveStep((s) => Math.max(0, s - 1));
 
@@ -191,6 +288,13 @@ export default function TrainerOnboardingWizard() {
             />
           )}
           {activeStep === 4 && <TrainingModulesSection onComplete={onNext} />}
+          {activeStep === 5 && ( // 🔹 new step
+            <TrainerEmploymentAgreement
+              values={values}
+              errors={errors}
+              setValue={setValue}
+            />
+          )}
 
           <Box>
             <Stepper

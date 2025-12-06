@@ -18,6 +18,8 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import LogoutConfirmDialog from "../components/auth/LogoutConfirmDialog";
+import { useAppSelector } from "../redux/store";
+import { useGetMeQuery } from "../redux/features/authApi";
 
 type TopBarProps = {
   title?: string;
@@ -36,6 +38,10 @@ export default function TopBar({
 }: TopBarProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
+  const { userData } = useAppSelector((state: any) => state.auth);
+  const { data, isFetching, refetch } = useGetMeQuery(undefined);
+  const me = (data as any)?.data ?? (data as any) ?? {};
+  const user = me;
 
   const open = Boolean(anchorEl);
 
@@ -104,7 +110,7 @@ export default function TopBar({
             <Tooltip title="Account settings">
               <IconButton onClick={handleAvatarClick}>
                 <Avatar sx={{ width: 36, height: 36, bgcolor: "var(--color-primary)" }}>
-                  A
+                  {user?.name?.[0]}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -130,10 +136,11 @@ export default function TopBar({
               {/* Profile Header */}
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography variant="body1" fontWeight={600}>
-                  Alex Johnson
+                  {user?.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Participant
+                  {user?.role}
+
                 </Typography>
               </Box>
               <Divider sx={{ my: 1 }} />

@@ -7,7 +7,7 @@ import PersonIcon from "@mui/icons-material/Person";
 export const participantMenu = [
   { label: "Upcoming Shifts", path: "/dashboard/upcoming", icon: <EventIcon /> },
   { label: "Request Shift", path: "/dashboard/request", icon: <AddCircleIcon /> },
-  { label: "Previous Shifts", path: "/dashboard/previous", icon: <HistoryIcon /> },
+  // { label: "Previous Shifts", path: "/dashboard/previous", icon: <HistoryIcon /> },
   { label: "Support Notes", path: "/dashboard/notes", icon: <NoteIcon /> },
     {
     label: "Profile",

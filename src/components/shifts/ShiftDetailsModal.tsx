@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,35 +12,91 @@ import {
   useMediaQuery,
   useTheme,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import TimelapseIcon from "@mui/icons-material/Timelapse";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
-import { getStatusStyle, Shift } from "../../utils";
+import { getStatusStyle } from "../../utils";
+import type { UiShift } from "../common/Calendar";
+import {
+  useClockInShiftMutation,
+  useClockOutShiftMutation,
+} from "../../redux/features/shiftApi";
 
 type Role = "participant" | "trainer" | "admin";
 
 type Props = {
   open: boolean;
-  shift: Shift | null;
+  shift: UiShift | null;
   role: Role;
   onClose: () => void;
 
   // participant actions
-  onCancelShift?: (shift: Shift, reason: string) => void;
-  onRequestChange?: (shift: Shift) => void;
+  onCancelShift?: (shift: UiShift, reason: string) => void;
+  onRequestChange?: (shift: UiShift) => void;
 
   // trainer actions
-  onClockIn?: (shift: Shift) => void;
-  onClockOut?: (shift: Shift, report: any) => void;
+  onClockIn?: (shift: UiShift) => void;
+  onClockOut?: (shift: UiShift, report: any) => void;
 
   // admin actions
-  onApproveShift?: (shift: Shift) => void;
-  onReassignShift?: (shift: Shift) => void;
-  onAdminCancel?: (shift: Shift) => void;
+  onApproveShift?: (shift: UiShift) => void;
+  onReassignShift?: (shift: UiShift) => void;
+  onAdminCancel?: (shift: UiShift) => void;
 };
+
+/** ===== Helpers ===== */
+const norm = (s?: string) => (s || "").toLowerCase().replace(/\s+/g, "_");
+
+// getStatusStyle can return a color string or { bg }
+const statusBg = (status: string) => {
+  const style = getStatusStyle(norm(status));
+  return typeof style === "string" ? style : style?.bg || "#666";
+};
+
+const fmtDateTimeRange = (startISO?: string, endISO?: string) => {
+  if (!startISO || !endISO) return "";
+  const start = new Date(startISO);
+  const end = new Date(endISO);
+
+  const dateFmt = new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(start);
+
+  const timeFmt = new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${dateFmt} — ${timeFmt.format(start)} to ${timeFmt.format(end)}`;
+};
+
+const fmtDuration = (startISO?: string, endISO?: string) => {
+  if (!startISO || !endISO) return "";
+  const ms = Math.max(0, new Date(endISO).getTime() - new Date(startISO).getTime());
+  const mins = Math.round(ms / 60000);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h) return `${h}h`;
+  return `${m}m`;
+};
+
+const pretty = (s?: string) =>
+  (s || "unknown")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+/** Core status derivation */
+const getReqStatus = (s?: UiShift | null) => norm(s?.status);
+const getOpStatus = (s?: UiShift | null) => norm(s?.raw?.shift?.status);
+const getDisplayStatus = (s?: UiShift | null) => getOpStatus(s) || getReqStatus(s);
 
 export default function ShiftDetailsModal({
   open,
@@ -54,9 +110,13 @@ export default function ShiftDetailsModal({
   onApproveShift,
   onReassignShift,
   onAdminCancel,
+  refetch
 }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [clockIn, { isLoading: isClockingIn }] = useClockInShiftMutation();
+  const [clockOut, { isLoading: isClockingOut }] = useClockOutShiftMutation();
 
   // cancel state
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
@@ -71,9 +131,81 @@ export default function ShiftDetailsModal({
     km: "",
   });
 
-  if (!shift) return null;
+  /** ===== Derived data (hooks always run) ===== */
+  const reqStatus = useMemo(() => getReqStatus(shift), [shift]);
+  const opStatus = useMemo(() => getOpStatus(shift), [shift]);
+  const displayStatus = useMemo(() => getDisplayStatus(shift), [shift]);
+  const isClockedInFlag = !!shift?.raw?.isClockedIn;
 
+  const isPendingReq = ["pending"].includes(reqStatus);
+  const isApprovedReq = ["approved"].includes(reqStatus);
+  const isCancelledReq = ["cancelled", "canceled", "declined"].includes(reqStatus);
+
+  const isInProgressOp = ["in_progress", "started", "active"].includes(opStatus);
+  const isCompletedOp = ["completed", "done"].includes(opStatus);
+
+  const isCancelled =
+    isCancelledReq ||
+    displayStatus === "cancelled" ||
+    displayStatus === "canceled";
+  const isCompleted =
+    isCompletedOp ||
+    displayStatus === "completed" ||
+    displayStatus === "done";
+
+  const dateTimeLabel = useMemo(
+    () => fmtDateTimeRange(shift?.start, shift?.end),
+    [shift?.start, shift?.end]
+  );
+  const durationLabel = useMemo(
+    () => fmtDuration(shift?.start, shift?.end),
+    [shift?.start, shift?.end]
+  );
+
+  /** ===== Action availability (single source of truth) ===== */
+  const actions = useMemo(() => {
+    const canMutate = !isCancelled && !isCompleted;
+
+    // TRAINER
+    const trainerCanClockOut = !!shift && (isInProgressOp || isClockedInFlag);
+    const trainerCanClockIn =
+      !!shift &&
+      canMutate &&
+      !trainerCanClockOut &&
+      (isApprovedReq || isPendingReq || (!opStatus && !isClockedInFlag));
+
+    // PARTICIPANT
+    const participantCanCancel = !!shift && canMutate;
+    const participantCanRequestChange = !!shift && canMutate;
+
+    // ADMIN
+    const adminCanApproveAssign = !!shift && isPendingReq;
+    const adminCanReassign = !!shift && !isCancelled && !isCompleted;
+    const adminCanCancel = !!shift && !isCancelled;
+
+    return {
+      trainerCanClockIn,
+      trainerCanClockOut,
+      participantCanCancel,
+      participantCanRequestChange,
+      adminCanApproveAssign,
+      adminCanReassign,
+      adminCanCancel,
+    };
+  }, [
+    shift,
+    isCancelled,
+    isCompleted,
+    isInProgressOp,
+    isClockedInFlag,
+    isApprovedReq,
+    isPendingReq,
+    opStatus,
+  ]);
+
+  /** ===== Handlers ===== */
   const handleConfirmCancel = () => {
+    if (!shift) return;
     if (role === "participant" && onCancelShift) {
       onCancelShift(shift, cancelReason);
     }
@@ -85,15 +217,43 @@ export default function ShiftDetailsModal({
     onClose();
   };
 
-  const handleClockOut = () => {
-    if (onClockOut) {
-      onClockOut(shift, reportForm);
+  const handleClockOut = async () => {
+    if (!shift) return;
+
+
+
+    try {
+      await clockOut({
+        requestId: shift.id,
+        report: {
+          activities: reportForm.activities,
+          progress: reportForm.progress,
+          incidents: reportForm.incidents,
+          km: reportForm.km,
+        },
+      }).unwrap();
+
       setReportForm({ activities: "", progress: "", incidents: "", km: "" });
+      setReportOpen(false);
+      refetch()
+      onClose();
+    } catch (err) {
+      console.error("Clock-out failed", err);
     }
-    setReportOpen(false);
-    onClose();
   };
 
+  const handleClockInClick = async () => {
+    if (!shift) return;
+
+
+    try {
+      await clockIn({ requestId: shift.id }).unwrap();
+      refetch()
+      onClose();
+    } catch (err) {
+      console.error("Clock-in failed", err);
+    }
+  };
 
   return (
     <>
@@ -125,7 +285,7 @@ export default function ShiftDetailsModal({
           }}
         >
           <Typography variant="h6" fontWeight={800} color="var(--color-text)">
-            {shift.title}
+            {shift?.title || "Shift Details"}
           </Typography>
           <IconButton
             onClick={onClose}
@@ -145,22 +305,22 @@ export default function ShiftDetailsModal({
               {
                 icon: <AccessTimeIcon color="primary" fontSize="small" />,
                 label: "Date & Time",
-                value: `${shift.date} — ${shift.time}`,
+                value: dateTimeLabel,
               },
               {
                 icon: <TimelapseIcon color="primary" fontSize="small" />,
                 label: "Duration",
-                value: shift.duration,
+                value: durationLabel,
               },
-              shift.worker && {
-                icon: <PersonIcon color="primary" fontSize="small" />,
-                label: "Trainer",
-                value: shift.worker,
-              },
-              shift.participant && {
+              shift?.participant && {
                 icon: <EventSeatIcon color="primary" fontSize="small" />,
                 label: "Participant",
-                value: shift.participant,
+                value: shift.participant.fullName,
+              },
+              shift?.trainer && {
+                icon: <PersonIcon color="primary" fontSize="small" />,
+                label: "Trainer",
+                value: shift.trainer.fullName,
               },
             ]
               .filter(Boolean)
@@ -189,9 +349,9 @@ export default function ShiftDetailsModal({
                 </Box>
               ))}
 
-            {/* Status */}
+            {/* Status chip */}
             <Chip
-              label={shift.status}
+              label={pretty(displayStatus)}
               sx={{
                 alignSelf: "flex-start",
                 fontWeight: 700,
@@ -200,19 +360,36 @@ export default function ShiftDetailsModal({
                 borderRadius: "999px",
                 fontSize: "0.85rem",
                 color: "#fff",
-                background: getStatusStyle(shift.status),
+                background: statusBg(displayStatus || "unknown"),
                 boxShadow: "0 3px 10px rgba(0,0,0,0.15)",
               }}
             />
 
-            {/* Completed Report (read-only) */}
-            {role === "trainer" && shift.status === "Completed" && (
+            {/* Notes */}
+            {!!shift?.notes && (
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid var(--color-border)",
+                  bgcolor: "var(--color-background-shade-2)",
+                }}
+              >
+                <Typography fontWeight={700} mb={0.5}>
+                  Notes
+                </Typography>
+                <Typography>{shift.notes}</Typography>
+              </Box>
+            )}
+
+            {/* Completed Report (placeholder) */}
+            {role === "trainer" && isCompleted && (
               <Stack spacing={2}>
                 <Typography fontWeight={700}>Submitted Shift Report</Typography>
-                <Typography>Activities: {reportForm.activities || "N/A"}</Typography>
-                <Typography>Progress: {reportForm.progress || "N/A"}</Typography>
-                <Typography>Incidents: {reportForm.incidents || "N/A"}</Typography>
-                <Typography>Kilometres: {reportForm.km || "0"} km</Typography>
+                <Typography>Activities: —</Typography>
+                <Typography>Progress: —</Typography>
+                <Typography>Incidents: —</Typography>
+                <Typography>Kilometres: 0 km</Typography>
               </Stack>
             )}
           </Stack>
@@ -229,9 +406,9 @@ export default function ShiftDetailsModal({
           }}
         >
           {/* Participant actions */}
-          {role === "participant" &&
-            !["Cancelled", "Completed"].includes(shift.status) && (
-              <>
+          {role === "participant" && (
+            <>
+              {/* {actions.participantCanCancel && (
                 <Button
                   color="error"
                   variant="outlined"
@@ -240,33 +417,39 @@ export default function ShiftDetailsModal({
                 >
                   Cancel Shift
                 </Button>
+              )} */}
+              {/* {actions.participantCanRequestChange && (
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => onRequestChange?.(shift)}
+                  onClick={() => shift && onRequestChange?.(shift)}
                 >
                   Request Change
                 </Button>
-              </>
-            )}
+              )} */}
+            </>
+          )}
 
           {/* Trainer actions */}
           {role === "trainer" && (
             <>
-              {(shift.status === "Pending") && role === "trainer" && (
+              {actions.trainerCanClockIn && (
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => onClockIn?.(shift)}
+                  onClick={handleClockInClick}
+                  disabled={isClockingIn}
+                  startIcon={isClockingIn ? <CircularProgress size={18} /> : null}
                 >
-                  Clock In
+                  {isClockingIn ? "Clocking In..." : "Clock In"}
                 </Button>
               )}
-              {shift.status === "In Progress" && (
+              {actions.trainerCanClockOut && (
                 <Button
                   variant="contained"
                   fullWidth
                   onClick={() => setReportOpen(true)}
+                  disabled={isClockingOut}
                 >
                   Clock Out
                 </Button>
@@ -277,24 +460,26 @@ export default function ShiftDetailsModal({
           {/* Admin actions */}
           {role === "admin" && (
             <>
-              {shift.status === "Pending" && (
+              {actions.adminCanApproveAssign && (
                 <Button
                   variant="contained"
                   color="success"
                   fullWidth
-                  onClick={() => onApproveShift?.(shift)}
+                  onClick={() => shift && onApproveShift?.(shift)}
                 >
-                  Approve & Assign
+                  Approve &amp; Assign
                 </Button>
               )}
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => onReassignShift?.(shift)}
-              >
-                Reassign
-              </Button>
-              {shift.status !== "Cancelled" && (
+              {actions.adminCanReassign && (
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => shift && onReassignShift?.(shift)}
+                >
+                  Reassign
+                </Button>
+              )}
+              {actions.adminCanCancel && (
                 <Button
                   color="error"
                   fullWidth
@@ -324,6 +509,8 @@ export default function ShiftDetailsModal({
           <Typography variant="h6" fontWeight={700} mb={2}>
             Confirm Cancellation
           </Typography>
+        </DialogContent>
+        <DialogContent>
           <Typography variant="body2" color="var(--color-text-muted)" mb={2}>
             {role === "participant"
               ? "Please provide a reason for cancelling this shift:"
@@ -417,10 +604,12 @@ export default function ShiftDetailsModal({
           <Button
             variant="contained"
             onClick={handleClockOut}
-            disabled={!reportForm.activities.trim()}
+            disabled={!reportForm.activities.trim() || isClockingOut}
+            startIcon={isClockingOut ? <CircularProgress size={18} /> : null}
           >
-            Submit Report & Clock Out
+            {isClockingOut ? "Submitting..." : "Submit Report & Clock Out"}
           </Button>
+
           <Button onClick={() => setReportOpen(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>

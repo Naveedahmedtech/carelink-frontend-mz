@@ -23,11 +23,11 @@ export const trainerMenu = [
     path: "/dashboard/previous-shifts",
     icon: <CalendarMonthIcon />,
   },
-  {
-    label: "Shift Reports",
-    path: "/dashboard/reports",
-    icon: <AssignmentIcon />,
-  },
+  // {
+  //   label: "Shift Reports",
+  //   path: "/dashboard/reports",
+  //   icon: <AssignmentIcon />,
+  // },
   {
     label: "Timesheets",
     path: "/dashboard/time-sheets",

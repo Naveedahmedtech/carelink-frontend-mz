@@ -15,9 +15,6 @@ import {
 } from "@mui/material";
 import { DatePicker, TimePicker } from "@mui/x-date-pickers";
 import { format, differenceInHours, isBefore } from "date-fns";
-import { mockShifts, Shift } from "../../utils";
-
-// MUI Icons
 import EventIcon from "@mui/icons-material/Event";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
@@ -26,6 +23,9 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleIcon from "@mui/icons-material/People";
 import DescriptionIcon from "@mui/icons-material/Description";
+
+// 🔗 RTK Query hook
+import { useRequestShiftMutation } from "../../redux/features/shiftApi";
 
 const mockWorkers = [
   { id: "1", name: "John Doe" },
@@ -41,6 +41,10 @@ export default function RequestShiftPage() {
   const [worker, setWorker] = useState("");
   const [notes, setNotes] = useState("");
   const [success, setSuccess] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const [requestShift, { isLoading }] = useRequestShiftMutation();
 
   // Notes limits
   const maxWords = 100;
@@ -60,32 +64,53 @@ export default function RequestShiftPage() {
     !!endTime &&
     !!supportType &&
     notes.trim().length > 0 &&
-    isBefore(startTime, endTime);
+    isBefore(startTime as Date, endTime as Date);
 
-  const handleSubmit = () => {
-    if (!isFormValid) return;
+  // Helper: combine date + time into a single Date
+  const combineDateTime = (d: Date, t: Date) => {
+    const dt = new Date(d);
+    dt.setHours(t.getHours(), t.getMinutes(), 0, 0);
+    return dt;
+  };
 
-    const newShift: Shift = {
-      id: String(Date.now()),
-      title: "Requested Shift",
-      date: format(date!, "yyyy-MM-dd"),
-      time: `${format(startTime!, "h:mm a")} – ${format(endTime!, "h:mm a")}`,
-      duration: `${differenceInHours(endTime!, startTime!)}h`,
-      worker: worker ? mockWorkers.find((w) => w.id === worker)?.name : undefined,
-      status: "Pending",
-      notes,
-    };
+  const handleSubmit = async () => {
+    if (!isFormValid || !date || !startTime || !endTime) return;
 
-    mockShifts.push(newShift);
-    setSuccess(true);
+    try {
+      // Combine date with start/end times and normalize to ISO for backend
+      const start = combineDateTime(date, startTime);
+      const end = combineDateTime(date, endTime);
 
-    // Reset form
-    setDate(null);
-    setStartTime(null);
-    setEndTime(null);
-    setSupportType("");
-    setWorker("");
-    setNotes("");
+      const payload = {
+        date: format(date, "yyyy-MM-dd"),
+        start: start.toISOString(),
+        end: end.toISOString(),
+        durationHours: differenceInHours(end, start),
+        service: supportType,
+        preferredTrainerIds: worker || null,
+        notes: notes.trim(),
+      };
+
+      await requestShift(payload).unwrap();
+
+      setSuccess(true);
+
+      // Reset form
+      setDate(null);
+      setStartTime(null);
+      setEndTime(null);
+      setSupportType("");
+      setWorker("");
+      setNotes("");
+    } catch (err: any) {
+      // Friendly error handling
+      const apiMsg =
+        err?.data?.message ||
+        err?.error ||
+        "Unable to submit shift request. Please try again.";
+      setErrorMsg(apiMsg);
+      setErrorOpen(true);
+    }
   };
 
   return (
@@ -221,7 +246,7 @@ export default function RequestShiftPage() {
             <MenuItem value="cooking">Cooking</MenuItem>
           </TextField>
 
-          <TextField
+          {/* <TextField
             select
             label="Preferred Worker (optional)"
             value={worker}
@@ -242,7 +267,7 @@ export default function RequestShiftPage() {
                 {w.name}
               </MenuItem>
             ))}
-          </TextField>
+          </TextField> */}
         </Stack>
       </Card>
 
@@ -262,7 +287,7 @@ export default function RequestShiftPage() {
           fullWidth
           multiline
           minRows={5}
-          maxRows={5} // fixed height
+          maxRows={5}
           required
           error={!notes.trim() && notes.length > 0}
           helperText={
@@ -301,7 +326,7 @@ export default function RequestShiftPage() {
         <Button
           fullWidth
           variant="contained"
-          disabled={!isFormValid}
+          disabled={!isFormValid || isLoading}
           onClick={handleSubmit}
           sx={{
             borderRadius: 999,
@@ -317,15 +342,14 @@ export default function RequestShiftPage() {
               boxShadow: "0 8px 18px rgba(0,0,0,0.25)",
             },
             "&.Mui-disabled": {
-              color: "var(--color-text-hover)",                     // text stays white
+              color: "var(--color-text-hover)",
               boxShadow: "none",
               opacity: 0.7,
             },
           }}
         >
-          Submit Request
+          {isLoading ? "Submitting..." : "Submit Request"}
         </Button>
-
       </Box>
 
       {/* Success Snackbar */}
@@ -333,7 +357,7 @@ export default function RequestShiftPage() {
         open={success}
         autoHideDuration={3000}
         onClose={() => setSuccess(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSuccess(false)}
@@ -341,6 +365,22 @@ export default function RequestShiftPage() {
           sx={{ borderRadius: 2, fontWeight: 600 }}
         >
           Shift request submitted successfully! (Pending Approval)
+        </Alert>
+      </Snackbar>
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={4000}
+        onClose={() => setErrorOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setErrorOpen(false)}
+          severity="error"
+          sx={{ borderRadius: 2, fontWeight: 600 }}
+        >
+          {errorMsg}
         </Alert>
       </Snackbar>
     </Box>

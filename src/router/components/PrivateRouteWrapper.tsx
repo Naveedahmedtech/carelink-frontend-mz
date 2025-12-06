@@ -15,10 +15,12 @@ const PrivateRouteWrapper = () => {
   // 🔹 Sync Redux with backend /auth/me
   useEffect(() => {
     if (data?.success && data.data) {
+      console.log(data.data)
       dispatch(
         loginSuccess({
           id: data.data._id, // or data.data.id if mapped in backend
           email: data.data.email,
+          name: data.data?.name,
           role: data.data.role,
           isLoggedIn: true,
           token: localStorage.getItem("token") || undefined,

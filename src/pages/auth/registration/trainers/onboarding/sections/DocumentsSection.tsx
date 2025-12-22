@@ -142,8 +142,8 @@ export default function DocumentsSection({ values, errors, setValue }: Props) {
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,
                           "& fieldset": { borderColor: "var(--color-border)" },
-                          "&:hover fieldset": { borderColor: "#E31E68" },
-                          "&.Mui-focused fieldset": { borderColor: "#E31E68" },
+                          "&:hover fieldset": { borderColor: "var(--color-primary)" },
+                          "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
                         },
                       },
                     },
@@ -180,7 +180,7 @@ export default function DocumentsSection({ values, errors, setValue }: Props) {
                     textAlign: "center",
                     transition: "all .2s ease",
                     ...(dragging === keyName && {
-                      borderColor: "#E31E68",
+                      borderColor: "var(--color-primary)",
                       boxShadow: "0 0 0 4px rgba(227,30,104,.10)",
                     }),
                   }}

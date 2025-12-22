@@ -99,7 +99,6 @@ export default function SignIn() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'var(--color-background-shade-1)',
           px: 2,
         }}
       >
@@ -115,7 +114,6 @@ export default function SignIn() {
         >
           {/* Header */}
           <Stack spacing={1} textAlign="center" mb={4}>
-            <LogoGlyph sx={{ fontSize: 48, color: 'var(--color-primary)' }} />
             <Typography variant="h4" fontWeight={800}>
               Welcome Back
             </Typography>

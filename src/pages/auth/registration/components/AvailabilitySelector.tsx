@@ -89,7 +89,9 @@ export default function AvailabilitySelector({ availability, setDayAvailability 
                     {DAYS.map((day) => {
                         const slot: TimeSlot | undefined = (availability[day] || [])[0];
                         const enabled = !!slot;
-                        const complete = !!slot?.start && !!slot?.end;
+                        const startValue = slot && slot.start ? slot.start : null;
+                        const endValue = slot && slot.end ? slot.end : null;
+                        const complete = !!startValue && !!endValue;
                         const invalid = slot ? !isValidSlotRange(slot) : false;
 
                         return (
@@ -110,13 +112,8 @@ export default function AvailabilitySelector({ availability, setDayAvailability 
                                         onChange={(e) => (e.target.checked ? enableDay(day) : disableDay(day))}
                                         size="small"
                                         sx={{
-                                            "& .MuiSwitch-switchBase.Mui-checked": {
-                                                color: "var(--color-primary)",
-                                            },
-                                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                                                bgcolor: "var(--color-primary)",
-                                                opacity: 1,
-                                            },
+                                            "& .MuiSwitch-switchBase.Mui-checked": { color: "var(--color-primary)" },
+                                            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "var(--color-primary)", opacity: 1 },
                                             "& .MuiSwitch-track": { bgcolor: "var(--color-border)" },
                                         }}
                                     />
@@ -141,7 +138,7 @@ export default function AvailabilitySelector({ availability, setDayAvailability 
                                                 >
                                                     <TimePicker
                                                         label="Start"
-                                                        value={slot?.start ?? null}
+                                                        value={startValue}
                                                         onChange={(v) => handleUpdate(day, "start", v)}
                                                         minutesStep={15}
                                                         views={["hours", "minutes"]}
@@ -158,7 +155,7 @@ export default function AvailabilitySelector({ availability, setDayAvailability 
 
                                                     <TimePicker
                                                         label="End"
-                                                        value={slot?.end ?? null}
+                                                        value={endValue}
                                                         onChange={(v) => handleUpdate(day, "end", v)}
                                                         minutesStep={15}
                                                         views={["hours", "minutes"]}
@@ -245,9 +242,9 @@ export default function AvailabilitySelector({ availability, setDayAvailability 
                                                 borderRadius: "22px",
                                                 px: 2,
                                                 alignSelf: "flex-start",
-                                                "&:hover": {
-                                                    borderColor: "var(--color-primary)",
-                                                    bgcolor: "var(--color-background-shade-2)",
+                                                   '&:hover': {
+                                                       borderColor: "var(--color-primary)",
+                                                       bgcolor: "var(--color-background-shade-2)",
                                                 },
                                             }}
                                         >
@@ -272,12 +269,12 @@ const inputSx = {
   '& .MuiOutlinedInput-root': {
     borderRadius: 2,
     '& fieldset': { borderColor: 'var(--color-border)' },
-    '&:hover fieldset': { borderColor: '#E31E68' },
-    '&.Mui-focused fieldset': { borderColor: '#E31E68' },
-    '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(227,30,104,.10)' },
+    '&:hover fieldset': { borderColor: 'var(--color-primary)' },
+    '&.Mui-focused fieldset': { borderColor: 'var(--color-primary)' },
+    '&.Mui-focused': { boxShadow: '0 0 0 4px var(--color-shadow)' },
   },
   '& .MuiInputAdornment-root .MuiSvgIcon-root': { color: 'var(--color-text-muted)' },
-  '& .MuiInputAdornment-root:hover .MuiSvgIcon-root': { color: '#E31E68' },
+    '& .MuiInputAdornment-root:hover .MuiSvgIcon-root': { color: 'var(--color-primary)' },
 };
 
 // Dialog/paper styling (applied via slotProps.mobilePaper/desktopPaper/popper.sx)
@@ -290,19 +287,19 @@ const pickerPaperStyles = {
     borderTop: '1px solid var(--color-border)',
     px: 1,
     '& .MuiButton-root': { textTransform: 'none', fontWeight: 700 },
-    '& .MuiButton-root:first-of-type': { color: '#E31E68', '&:hover': { bgcolor: '#fdf2f7' } },
-    '& .MuiButton-root:last-of-type': {
-      color: '#fff', backgroundColor: '#E31E68', borderRadius: 12, px: 1.5,
-      '&:hover': { backgroundColor: '#c71856' },
-    },
+        '& .MuiButton-root:first-of-type': { color: 'var(--color-primary)', '&:hover': { bgcolor: 'var(--color-background-shade-2)' } },
+        '& .MuiButton-root:last-of-type': {
+            color: '#fff', backgroundColor: 'var(--color-primary)', borderRadius: 12, px: 1.5,
+            '&:hover': { backgroundColor: 'var(--color-hover)' },
+        },
   },
   /* Multi-section wheels + list */
   '& .MuiMultiSectionDigitalClockSection-item': {
     borderRadius: 999, margin: '4px 8px',
-    '&:hover': { bgcolor: '#fdf2f7' },
-    '&.Mui-selected': { bgcolor: '#E31E68 !important', color: '#fff !important' },
-  },
-  '& .MuiDigitalClock-item.Mui-selected': {
-    bgcolor: '#E31E68 !important', color: '#fff !important',
-  },
+        '&:hover': { bgcolor: 'var(--color-background-shade-2)' },
+        '&.Mui-selected': { bgcolor: 'var(--color-primary) !important', color: '#fff !important' },
+    },
+    '& .MuiDigitalClock-item.Mui-selected': {
+        bgcolor: 'var(--color-primary) !important', color: '#fff !important',
+    },
 };

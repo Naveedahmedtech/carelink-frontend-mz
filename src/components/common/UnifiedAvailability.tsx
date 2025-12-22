@@ -182,12 +182,12 @@ const inputSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: 2,
     "& fieldset": { borderColor: "var(--color-border)" },
-    "&:hover fieldset": { borderColor: "#E31E68" },
-    "&.Mui-focused fieldset": { borderColor: "#E31E68" },
-    "&.Mui-focused": { boxShadow: "0 0 0 4px rgba(227,30,104,.10)" },
+    "&:hover fieldset": { borderColor: "var(--color-primary)" },
+    "&.Mui-focused fieldset": { borderColor: "var(--color-primary)" },
+    "&.Mui-focused": { boxShadow: "0 0 0 4px var(--color-shadow)" },
   },
   "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: "var(--color-text-muted)" },
-  "& .MuiInputAdornment-root:hover .MuiSvgIcon-root": { color: "#E31E68" },
+  "& .MuiInputAdornment-root:hover .MuiSvgIcon-root": { color: "var(--color-primary)" },
 };
 
 const pickerPaperStyles = {
@@ -198,23 +198,23 @@ const pickerPaperStyles = {
     borderTop: "1px solid var(--color-border)",
     px: 1,
     "& .MuiButton-root": { textTransform: "none", fontWeight: 700 },
-    "& .MuiButton-root:first-of-type": { color: "#E31E68", "&:hover": { bgcolor: "#fdf2f7" } },
+    "& .MuiButton-root:first-of-type": { color: "var(--color-primary)", "&:hover": { bgcolor: "var(--color-background-shade-2)" } },
     "& .MuiButton-root:last-of-type": {
       color: "#fff",
-      backgroundColor: "#E31E68",
+      backgroundColor: "var(--color-primary)",
       borderRadius: 12,
       px: 1.5,
-      "&:hover": { backgroundColor: "#c71856" },
+      "&:hover": { backgroundColor: "var(--color-hover)" },
     },
   },
   "& .MuiMultiSectionDigitalClockSection-item": {
     borderRadius: 999,
     margin: "4px 8px",
-    "&:hover": { bgcolor: "#fdf2f7" },
-    "&.Mui-selected": { bgcolor: "#E31E68 !important", color: "#fff !important" },
+    "&:hover": { bgcolor: "var(--color-background-shade-2)" },
+    "&.Mui-selected": { bgcolor: "var(--color-primary) !important", color: "#fff !important" },
   },
   "& .MuiDigitalClock-item.Mui-selected": {
-    bgcolor: "#E31E68 !important",
+    bgcolor: "var(--color-primary) !important",
     color: "#fff !important",
   },
 };
@@ -367,7 +367,7 @@ export default function UnifiedAvailability({
                         >
                           <TimePicker
                             label="Start"
-                            value={slot?.start ?? null}
+                            value={slot?.start || null}
                             onChange={(v) => updateSlot(day, "start", v)}
                             minutesStep={minutesStep}
                             views={["hours", "minutes"]}
@@ -389,7 +389,7 @@ export default function UnifiedAvailability({
 
                           <TimePicker
                             label="End"
-                            value={slot?.end ?? null}
+                            value={slot?.end || null}
                             onChange={(v) => updateSlot(day, "end", v)}
                             minutesStep={minutesStep}
                             views={["hours", "minutes"]}

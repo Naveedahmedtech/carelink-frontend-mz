@@ -216,7 +216,6 @@ export default function TimesheetTable(props: {
         borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
-        backgroundColor: "background.paper",
         boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
       }}
     >
@@ -234,7 +233,6 @@ export default function TimesheetTable(props: {
           <TableRow
             sx={{
               "& th": {
-                bgcolor: "grey.100",
                 fontWeight: 700,
                 fontSize: 13,
                 textTransform: "uppercase",
@@ -363,7 +361,7 @@ export default function TimesheetTable(props: {
 
           {/* Totals footer */}
           {!loading && totals && (
-            <TableRow sx={{ bgcolor: "grey.50" }}>
+            <TableRow>
               <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
                 Totals
               </TableCell>

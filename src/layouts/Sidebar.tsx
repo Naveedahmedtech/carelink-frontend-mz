@@ -69,18 +69,18 @@ export default function Sidebar({ menu, onNavigate, collapsed }: SidebarProps) {
           p: 2,
           display: "flex",
           alignItems: "center",
-          justifyContent: collapsed ? "center" : "flex-start",
+          justifyContent: "center",
           gap: 1,
           cursor: "pointer",
         }}
         onClick={() => navigate("/dashboard")}
       >
-        <Avatar sx={{ bgcolor: "var(--color-primary)" }}>C</Avatar>
-        {!collapsed && (
-          <Typography variant="h6" fontWeight={700}>
-            CareLink
-          </Typography>
-        )}
+        <Box
+          component="img"
+          src="/images/logo.png"
+          alt="Care Link"
+          sx={{ height: 45, width: 45, objectFit: "contain" }}
+        />
       </Box>
       <Divider />
 

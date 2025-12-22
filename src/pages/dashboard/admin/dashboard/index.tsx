@@ -31,33 +31,11 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 import { useGetAdminDashboardSummaryQuery } from "../../../../redux/features/shiftApi";
+import { useTheme as useAppTheme } from "../../../../context/ThemeContext";
+import { readCssVar } from "../../../../theme";
 
 /* ---------- theme ---------- */
-const brandPink = "#E31E68";
-const lightTheme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: brandPink },
-    background: { default: "#fafafa", paper: "#ffffff" },
-    divider: "rgba(5,5,22,.08)",
-    text: { primary: "#0f172a", secondary: "#475569" },
-  },
-  shape: { borderRadius: 12 },
-  typography: {
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    fontWeightBold: 800,
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: { root: { border: "1px solid rgba(5,5,22,.08)" } },
-    },
-    MuiButton: {
-      styleOverrides: { root: { textTransform: "none", fontWeight: 700, borderRadius: 10 } },
-    },
-    MuiChip: { styleOverrides: { root: { fontWeight: 600 } } },
-  },
-});
+const defaultAccent = "#12D3B0";
 
 /* ---------- helpers ---------- */
 const fmt = (n?: number) => (typeof n === "number" ? n.toLocaleString() : "-");
@@ -68,7 +46,7 @@ function KpiCard({
   value,
   subtitle,
   icon,
-  accent = brandPink,
+  accent = defaultAccent,
   loading,
 }: {
   title: string;
@@ -145,7 +123,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Paper elevation={0} sx={{ p: { xs: 1.5, md: 1.75 }, borderRadius: 2, background: "#fff" }}>
+    <Paper elevation={0} sx={{ p: { xs: 1.5, md: 1.75 }, borderRadius: 2,
+     }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "flex-start", sm: "center" }}
@@ -168,8 +147,45 @@ function Section({
 
 /* ---------- page ---------- */
 export default function AdminDashboard() {
+  const { theme } = useAppTheme();
   const { data, isLoading, isFetching, isError, refetch } = useGetAdminDashboardSummaryQuery();
   const s = data?.data;
+
+  const brandPink = readCssVar("--color-primary", defaultAccent);
+  const lightTheme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: theme,
+          primary: { main: brandPink },
+          background: {
+            default: readCssVar("--color-background", "#f9fafb"),
+            paper: readCssVar("--color-background-shade-1", "#ffffff"),
+          },
+          divider: readCssVar("--color-border", "rgba(5,5,22,.08)"),
+          text: {
+            primary: readCssVar("--color-text", "#0f172a"),
+            secondary: readCssVar("--color-text-secondary", "#475569"),
+          },
+        },
+        shape: { borderRadius: 12 },
+        typography: {
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          fontWeightBold: 800,
+        },
+        components: {
+          MuiPaper: {
+            styleOverrides: { root: { border: "1px solid rgba(5,5,22,.08)" } },
+          },
+          MuiButton: {
+            styleOverrides: { root: { textTransform: "none", fontWeight: 700, borderRadius: 10 } },
+          },
+          MuiChip: { styleOverrides: { root: { fontWeight: 600 } } },
+        },
+      }),
+    [brandPink, theme]
+  );
 
   const totalUsers = s?.users.total ?? 0;
   const totalShiftReq = s?.shiftRequests.total ?? 0;
@@ -228,7 +244,7 @@ export default function AdminDashboard() {
         accent: "#6366F1",
       },
     ],
-    [s, totalUsers, totalShiftReq, totalShifts]
+    [s, totalUsers, totalShiftReq, totalShifts, brandPink]
   );
 
   return (
@@ -245,7 +261,7 @@ export default function AdminDashboard() {
         })}
       >
         {/* HEADER */}
-        <Paper elevation={0} sx={{ p: { xs: 1.4, md: 2 }, borderRadius: 2, background: "#fff" }}>
+        <Paper elevation={0} sx={{ p: { xs: 1.4, md: 2 }, borderRadius: 2, }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             alignItems={{ xs: "flex-start", sm: "center" }}

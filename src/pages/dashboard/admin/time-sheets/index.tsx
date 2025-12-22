@@ -205,7 +205,6 @@ export default function TimesheetAdminPage() {
   return (
     <Box
       sx={{
-        bgcolor: "grey.50",
         minHeight: "100vh",
         py: { xs: 1.5, sm: 2, md: 3 },
       }}
@@ -226,7 +225,6 @@ export default function TimesheetAdminPage() {
           sx={{
             p: { xs: 1.25, sm: 1.75, md: 2 },
             borderRadius: 3,
-            background: "linear-gradient(135deg, #eef2ff 0%, #ffffff 50%, #eef2ff 100%)",
             border: "1px solid",
             borderColor: "divider",
             display: "flex",

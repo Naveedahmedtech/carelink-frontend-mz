@@ -26,3 +26,9 @@
   background: var(--color-primary);
   color: #fff;
 }
+
+
+.fc-scrollgrid-sync-inner {
+  background: var(--color-background-shade-2) !important;
+  
+}

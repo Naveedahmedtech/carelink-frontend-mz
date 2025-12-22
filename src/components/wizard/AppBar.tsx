@@ -32,14 +32,12 @@ export default function CareLinkAppBar() {
       >
         <Toolbar className="mx-auto max-w-7xl w-full flex justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Typography
-              variant="h6"
-              className="!font-extrabold !tracking-tight !text-primary"
-            >
-              CareLink
-            </Typography>
-          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <Box component="img" src="/images/logo.png" alt="Care Link" sx={{ height: 56 }} />
+          </button>
 
           {/* Desktop nav */}
           <div className="hidden md:flex gap-8 items-center">

@@ -10,40 +10,61 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const getSystemTheme = (): Theme => {
-    // return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'dark' : 'light';
-    return 'light';
+    if (typeof window === 'undefined' || !window.matchMedia) return 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    // const [theme, setTheme] = useState<Theme>(window.localStorage.getItem('theme') as Theme || getSystemTheme());
-    // const [theme, setTheme] = useState<Theme>(window.localStorage.getItem('theme') as Theme || 'dark'); // Default to 'dark'
-    const [theme, setTheme] = useState<Theme>(window.localStorage.getItem('theme') as Theme || getSystemTheme() || 'light');
-
-
+    const [theme, setTheme] = useState<Theme>(() => {
+        if (typeof window === 'undefined') return 'dark';
+        const stored = window.localStorage.getItem('theme') as Theme | null;
+        const initial = stored || getSystemTheme() || 'dark';
+        document.documentElement.classList.toggle('dark', initial === 'dark');
+        return initial;
+    });
 
     useEffect(() => {
         const localTheme = window.localStorage.getItem('theme') as Theme | null;
-        setTheme(localTheme || getSystemTheme());
+        if (localTheme) {
+            setTheme(localTheme);
+        } else {
+            setTheme(getSystemTheme());
+        }
 
-        const themeChangeHandler = () => {
-            // const newTheme = e.matches ? 'dark' : 'light';
-            const newTheme = 'light';
-            setTheme(newTheme);
-            window.localStorage.setItem('theme', newTheme);
+        const themeChangeHandler = (e: MediaQueryListEvent) => {
+            // Only follow system changes when user hasn't chosen a theme
+            if (!window.localStorage.getItem('theme')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.documentElement.classList.toggle('dark', newTheme === 'dark');
+                setTheme(newTheme);
+            }
         };
 
-        const mediaQueryList = window.matchMedia('(prefers-color-scheme: light)');
-        mediaQueryList.addEventListener('change', themeChangeHandler);
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', themeChangeHandler);
+        } else {
+            // Safari fallback
+            // @ts-ignore
+            mediaQuery.addListener(themeChangeHandler);
+        }
 
-        return () => mediaQueryList.removeEventListener('change', themeChangeHandler);
+        return () => {
+            if (mediaQuery.removeEventListener) {
+                mediaQuery.removeEventListener('change', themeChangeHandler);
+            } else {
+                // @ts-ignore
+                mediaQuery.removeListener(themeChangeHandler);
+            }
+        };
     }, []);
 
     const toggleTheme = useCallback(() => {
-        // const newTheme = theme === 'light' ? 'dark' : 'light';
-        const newTheme = 'light';
+        const newTheme: Theme = theme === 'light' ? 'dark' : 'light';
+        document.documentElement.classList.toggle('dark', newTheme === 'dark');
         setTheme(newTheme);
         window.localStorage.setItem('theme', newTheme);
-    }, []);
+    }, [theme]);
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', theme === 'dark');

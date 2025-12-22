@@ -54,6 +54,11 @@ const Header = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto relative z-10">
         <div className={`${isMobile ? "px-1 py-8" : "px-6 py-8"} min-h-screen`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <img src="/images/logo.png" alt="Care Link" style={{ height: 40 }} />
+            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>Dashboard</h1>
+          </div>
+
           <Outlet />
         </div>
       </div>

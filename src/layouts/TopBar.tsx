@@ -100,9 +100,11 @@ export default function TopBar({
               </IconButton>
             </Tooltip>
 
-            <Typography variant="h6" fontWeight={700}>
-              {/* {title || "Dashboard"} */}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="h6" fontWeight={700} sx={{ display: { xs: "none", sm: "block" } }}>
+                {title || 'Dashboard'}
+              </Typography>
+            </Box>
           </Box>
 
           {/* Right-side actions */}

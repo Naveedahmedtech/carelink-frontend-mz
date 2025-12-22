@@ -16,7 +16,7 @@ export default function StepsRail({
     <div className="bg-backgroundShade2 p-6 md:p-8 border-r border-border h-full">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-extrabold text-textDark mb-2">
+          <h2 className="text-2xl font-extrabold  mb-2">
             Activate your service
           </h2>
           <p className="text-sm text-textSecondary">

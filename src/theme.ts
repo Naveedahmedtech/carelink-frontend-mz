@@ -2,11 +2,36 @@
 import { createTheme } from '@mui/material/styles';
 import '@mui/x-date-pickers/themeAugmentation';
 
-export const theme = createTheme({
+export const readCssVar = (name: string, fallback: string) => {
+  if (typeof window === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
+
+// Factory function to create theme
+export const createAppTheme = (mode?: 'light' | 'dark') => {
+  // MUI palette MUST use concrete colors for lighten/darken operations.
+  // Read CSS variables and pass their resolved values into the palette.
+  const isDark =
+    mode === 'dark' ||
+    (typeof window !== 'undefined' && document.documentElement.classList.contains('dark'));
+
+  const primaryMain = readCssVar('--color-primary', '#12D3B0');
+  const primaryDark = readCssVar('--color-hover', '#0FAE94');
+  const primaryContrast = readCssVar('--color-text-hover', '#ffffff');
+  const textPrimary = readCssVar('--color-text', isDark ? '#f9fafb' : '#1f1f1f');
+  const textSecondary = readCssVar('--color-text-secondary', '#9ca3af');
+  const backgroundDefault = readCssVar('--color-background', isDark ? '#111827' : '#f9fafb');
+  const backgroundPaper = readCssVar('--color-background-shade-1', isDark ? '#1f2937' : '#ffffff');
+  const errorMain = readCssVar('--color-error', '#ef4444');
+
+  return createTheme({
   palette: {
-    primary: { main: '#E31E68', dark: '#c71856', contrastText: '#ffffff' },
-    text: { primary: '#1f1f1f', secondary: '#6b7280' },
-    error: { main: '#ef4444' },
+    mode: isDark ? 'dark' : 'light',
+    primary: { main: primaryMain, dark: primaryDark, contrastText: primaryContrast },
+    background: { paper: backgroundPaper, default: backgroundDefault },
+    text: { primary: textPrimary, secondary: textSecondary },
+    error: { main: errorMain },
   },
   components: {
     /* Inputs (Start/End) */
@@ -14,12 +39,12 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#E31E68' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#E31E68' },
-          '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(227, 30, 104, 0.10)' },
+          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#12D3B0' },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#12D3B0' },
+          '&.Mui-focused': { boxShadow: '0 0 0 4px var(--color-shadow)' },
         },
         notchedOutline: { borderColor: 'var(--color-border)' },
-        input: { color: '#0d0d0d' },
+        input: { color: 'var(--color-text)' },
       },
     },
     /* Clock icon color */
@@ -27,7 +52,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiSvgIcon-root': { color: '#9ca3af' },
-          '&:hover .MuiSvgIcon-root': { color: '#E31E68' },
+          '&:hover .MuiSvgIcon-root': { color: '#12D3B0' },
         },
       },
     },
@@ -43,7 +68,7 @@ export const theme = createTheme({
           '& .MuiPickersToolbar-root .MuiTypography-root': {
             color: 'var(--color-text-dark)',
           },
-          '& .MuiPickersArrowSwitcher-button:hover': { color: '#E31E68' },
+          '& .MuiPickersArrowSwitcher-button:hover': { color: '#12D3B0' },
 
           /* Action bar (CANCEL/OK) */
           '& .MuiPickersActionBar-root': {
@@ -52,16 +77,16 @@ export const theme = createTheme({
             '& .MuiButton-root': { textTransform: 'none', fontWeight: 700 },
             /* CANCEL */
             '& .MuiButton-root:first-of-type': {
-              color: '#E31E68',
-              '&:hover': { backgroundColor: '#fdf2f7' },
+              color: '#12D3B0',
+              '&:hover': { backgroundColor: 'var(--color-background-shade-2)' },
             },
             /* OK */
             '& .MuiButton-root:last-of-type': {
               color: '#fff',
-              backgroundColor: '#E31E68',
+              backgroundColor: '#12D3B0',
               borderRadius: 12,
               paddingInline: 12,
-              '&:hover': { backgroundColor: '#c71856' },
+              '&:hover': { backgroundColor: '#0FAE94' },
             },
           },
 
@@ -73,24 +98,25 @@ export const theme = createTheme({
           '& .MuiMultiSectionDigitalClockSection-item': {
             borderRadius: 999,
             margin: '4px 8px',
-            '&:hover': { backgroundColor: '#fdf2f7' },
-            '&.Mui-selected': { backgroundColor: '#E31E68', color: '#fff' },
+            '&:hover': { backgroundColor: 'var(--color-background-shade-2)' },
+            '&.Mui-selected': { backgroundColor: '#12D3B0', color: '#fff' },
           },
 
           /* Single-column digital clock */
           '& .MuiDigitalClock-item.Mui-selected': {
-            backgroundColor: '#E31E68', color: '#fff',
+            backgroundColor: '#12D3B0', color: '#fff',
           },
 
           /* Analog clock */
           '& .MuiTimeClock-root .MuiClockNumber-root.Mui-selected': {
-            backgroundColor: '#E31E68', color: '#fff',
+            backgroundColor: '#12D3B0', color: '#fff',
           },
           '& .MuiClock-pin, & .MuiClockPointer-root, & .MuiClockPointer-thumb': {
-            backgroundColor: '#E31E68', borderColor: '#E31E68',
+            backgroundColor: '#12D3B0', borderColor: '#12D3B0',
           },
         },
       },
     },
   },
-});
+  });
+};

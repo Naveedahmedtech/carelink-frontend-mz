@@ -162,7 +162,7 @@ export default function TimesheetPage() {
   const statusUpper = (tsView?.status || "").toUpperCase();
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "grey.50", minHeight: "100vh" }}>
+    <Box sx={{ p: { xs: 2, md: 3 },  minHeight: "100vh" }}>
       {/* Top bar */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
         <Box>

@@ -90,8 +90,13 @@ export default function TrainerOnboardingWizard() {
       if (!values.fullName) e.fullName = "Required";
       if (!values.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
         e.email = "Valid email required";
-      if (!values.phone || !/^0\d{9}$/.test(values.phone.replace(/\s/g, "")))
-        e.phone = "Valid AU mobile required";
+      const normalizedPhone = values.phone.trim().startsWith("+")
+        ? `+${values.phone.replace(/\D/g, "")}`
+        : values.phone.replace(/\D/g, "");
+      const isValidAuMobile =
+        /^0\d{9}$/.test(normalizedPhone) || /^(\+?61)4\d{8}$/.test(normalizedPhone);
+      if (!values.phone || !isValidAuMobile)
+        e.phone = "Enter an AU mobile (04xx xxx xxx or +61 4xx xxx xxx)";
     }
     if (activeStep === 1) {
       if (!Object.values(values.availability).some((slots) => slots.length))

@@ -35,6 +35,15 @@ export default function TrainerIdentitySection({
     },
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.trim();
+    const hasPlus = raw.startsWith("+");
+    const digits = raw.replace(/\D/g, "");
+    const trimmedDigits = digits.slice(0, 11);
+    const nextValue = hasPlus ? `+${trimmedDigits}` : trimmedDigits;
+    setValue("phone", nextValue);
+  };
+
   return (
     <SectionCard
       title="Your Details"
@@ -70,10 +79,11 @@ export default function TrainerIdentitySection({
             {...fieldProps}
             label="Mobile Number"
             value={values.phone}
-            onChange={(e) => setValue("phone", e.target.value)}
+            onChange={handlePhoneChange}
             error={Boolean(errors.phone)}
-            helperText={errors.phone || "Australian format (e.g., 04xx xxx xxx)"}
+            helperText={errors.phone || "AU format: 04xx xxx xxx or +61 4xx xxx xxx"}
             autoComplete="tel"
+            inputProps={{ inputMode: "tel", pattern: "\\+?[0-9]*", maxLength: 12 }}
             InputProps={{ startAdornment: <InputAdornment position="start"><PhoneIcon sx={{ color: "var(--color-text-secondary)" }} /></InputAdornment> }}
           />
         </Grid>
